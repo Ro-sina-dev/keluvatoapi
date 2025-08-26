@@ -15,95 +15,77 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'birth_date' => 'nullable|date',
-            'email' => 'required|string|email|unique:users',
+            'email' => 'required|email|unique:users',
             'phone' => 'nullable|string|max:20',
-            'country' => 'required|string|max:100', // ✅ Ajout du pays
-            'password' => 'required|string|min:6|confirmed',
+            'country' => 'required|string|max:100',
+            'password' => 'required|string|confirmed|min:6',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['role'] = 'client';
 
         $user = User::create($validated);
+        Auth::login($user);
 
-        // Création du token Sanctum
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => "Bienvenue {$user->name}, vous êtes inscrit en tant que {$user->role_label}.",
-            'token' => $token,
-            'user' => $user
-        ], 201);
+        return redirect()->route('home');
     }
 
-    // 🔹 Inscription pro
     public function registerPro(Request $request)
     {
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'creation_date' => 'nullable|date',
-            'email' => 'required|string|email|unique:users',
-            'country' => 'required|string|max:100', // ✅ Ajout du pays
-            'password' => 'required|string|min:6|confirmed',
+            'email' => 'required|email|unique:users',
+            'country' => 'required|string|max:100',
+            'password' => 'required|string|confirmed|min:6',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['role'] = 'pro';
-
-        // pour un pro, crée un "name" par défaut si besoin
-        $validated['name'] = $request->input('name', $validated['company_name']);
-
+        $validated['name'] = $request->input('company_name');
 
         $user = User::create($validated);
+        Auth::login($user);
 
-        // Création du token Sanctum
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => "Bienvenue {$user->name}, vous êtes inscrit en tant que {$user->role_label}.",
-            'token'   => $token,
-            'user'    => $user,
-        ], 201);
+        return redirect()->route('home');
     }
 
-    // 🔹 Connexion
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
+        $credentials = $request->only('email', 'password');
 
-        // Utilisation explicite du guard web
-        if (!Auth::guard('web')->attempt($credentials)) {
-            return response()->json(['message' => 'Identifiants incorrects'], 401);
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+
+            $user = Auth::user();
+
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard'); // vers la vue admin
+            } elseif ($user->role === 'pro') {
+                return redirect()->route('profile'); // vers profil pro
+            } else {
+                return redirect()->route('home'); // utilisateur simple
+            }
         }
 
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-
-        // nouveau token à chaque login (optionnel : révoquer les anciens)
-        $user->tokens()->delete();
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => "Connexion réussie. Bonjour {$user->name}, vous êtes connecté en tant que {$user->role_label}.",
-            'token'   => $token,
-            'user'    => $user,
+        return back()->withErrors([
+            'email' => 'Les identifiants sont incorrects.',
         ]);
     }
+
+
 
     // Qui suis-je ?
     // app/Http/Controllers/AuthController.php (extraits)
-    public function me(Request $request)
-    {
-        return response()->json(['user' => $request->user()]);
-    }
+    // public function me(Request $request)
+    // {
+    //      return response()->json(['user' => $request->user()]);
+    //  }
 
-    public function logout(Request $request)
-    {
-        $token = $request->user()->currentAccessToken();
-        if ($token) $token->delete();
-        return response()->json(['message' => 'Déconnecté']);
-    }
+    // public function logout(Request $request)
+    // {
+    //    $token = $request->user()->currentAccessToken();
+    //    if ($token) $token->delete();
+    //    return response()->json(['message' => 'Déconnecté']);
+    //}
 }

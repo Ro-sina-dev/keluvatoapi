@@ -2,20 +2,20 @@
 
 return [
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'], // Les chemins API que tu veux protéger
+    'paths' => ['sanctum/csrf-cookie'], // Plus besoin de protéger api/* puisqu'on utilise web
 
-    'allowed_methods' => ['*'], // Autorise toutes les méthodes HTTP (GET, POST, etc.)
+    'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://127.0.0.1:5500'], // Autorise uniquement ton frontend local
+    'allowed_origins' => ['*'], // Simplifié car plus de problème CORS avec les routes web
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'], // Autorise tous les headers
+    'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 
     'max_age' => 0,
 
-    'supports_credentials' => false, // true si tu veux gérer les cookies/authentification cross-origin
+    'supports_credentials' => false,
 
 ];

@@ -25,16 +25,20 @@ class Kernel extends HttpKernel
     ];
 
     protected $routeMiddleware = [
+
         'auth' => \App\Http\Middleware\Authenticate::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'role' => \App\Http\Middleware\EnsureUserHasRole::class, // ← ajouté
+       // 'role' => \App\Http\Middleware\EnsureUserHasRole::class, // ← ajouté
 
         // ...
-        'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+      //  'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
 
         // Optionnel : paramétrable (voir plus bas)
         'role'  => \App\Http\Middleware\RoleMiddleware::class, // si tu veux 'role:admin'
 
+    // ...
+    'admin' => \App\Http\Middleware\AdminMiddleware::class,
 
     ];
+
 }
