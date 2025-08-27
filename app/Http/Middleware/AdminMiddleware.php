@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -9,13 +10,21 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check() && Auth::user()->role === 'admin') {
-            return $next($request);
+
+          $user = Auth::user();
+
+        if (!$user) {
+            return redirect()->route('login'); // pas connecté
         }
 
-        abort(403, 'Accès réservé à l\'administration.');
 
-        return $next($request);
+
+        if ($user->role !== 'admin') {
+              return $next($request);
+
+        }
+
+         // Tu peux choisir un 403 ou rediriger ailleurs
+            abort(403, 'Accès réservé aux administrateurs.');
     }
 }
-

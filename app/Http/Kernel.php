@@ -1,6 +1,4 @@
 <?php
-// app/Http/Kernel.php
-
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -15,6 +13,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\ContentSecurityPolicyMiddleware::class,
         ],
 
         'api' => [
@@ -25,20 +24,17 @@ class Kernel extends HttpKernel
     ];
 
     protected $routeMiddleware = [
-
-        'auth' => \App\Http\Middleware\Authenticate::class,
+        'auth'     => \App\Http\Middleware\Authenticate::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-       // 'role' => \App\Http\Middleware\EnsureUserHasRole::class, // ← ajouté
 
-        // ...
-      //  'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        // ✅ ALIAS ADMIN (indispensable)
 
-        // Optionnel : paramétrable (voir plus bas)
-        'role'  => \App\Http\Middleware\RoleMiddleware::class, // si tu veux 'role:admin'
-
-    // ...
-    'admin' => \App\Http\Middleware\AdminMiddleware::class,
-
+        // ❗ Seulement si tu as vraiment ce middleware :
+        // 'role'  => \App\Http\Middleware\RoleMiddleware::class,
     ];
 
+    protected $middlewareAliases = [
+    // ... autres middlewares
+    'admin' => \App\Http\Middleware\AdminMiddleware::class,
+];
 }

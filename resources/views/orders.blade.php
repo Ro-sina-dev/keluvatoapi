@@ -107,413 +107,69 @@
             </div>
 
             <div class="orders-list">
-                <!-- Commande 1 - En cours -->
-                <div class="order-card" data-status="pending"
-                    style="
-              background: white;
-              border-radius: 15px;
-              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-              margin-bottom: 25px;
-              overflow: hidden;
-              cursor: pointer;
-            ">
-                    <div class="order-header"
-                        style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 20px;
-                border-bottom: 1px solid #f1f1f1;
-                background: #f9f9f9;
-              ">
-                        <div class="order-info">
-                            <h3 style="margin: 0; color: #1f4e5f; font-size: 1.2rem">
-                                Commande #KL-2023-12548
-                            </h3>
-                            <p style="margin: 5px 0 0; color: #666; font-size: 0.9rem">
-                                Passée le 15 octobre 2023
-                            </p>
+                @forelse ($orders as $order)
+                    <div class="order-card" data-status="{{ $order->status }}"
+                        style="background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 25px;">
+                        <div class="order-header"
+                            style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #f1f1f1;">
+                            <div class="order-info">
+                                <h3 style="margin: 0; color: #1f4e5f;">Commande #{{ $order->id }}</h3>
+                                <p style="color: #666;">Passée le {{ $order->created_at->format('d/m/Y') }}</p>
+                            </div>
+                            <div class="order-status"
+                                style="background:
+                                @if ($order->status == 'pending') #4a6bff
+                                @elseif($order->status == 'delivered') #4caf50
+                                @elseif($order->status == 'cancelled') #f44336
+                                @else #ccc @endif;
+                                color: white; padding: 8px 15px; border-radius: 20px;">
+                                {{ ucfirst($order->status) }}
+                            </div>
                         </div>
-                        <div class="order-status"
-                            style="
-                  background: #4a6bff;
-                  color: white;
-                  padding: 8px 15px;
-                  border-radius: 20px;
-                  font-size: 0.9rem;
-                  font-weight: 500;
-                ">
-                            En cours de livraison
-                        </div>
-                    </div>
 
-                    <div class="order-body" style="padding: 20px">
-                        <div class="order-products"
-                            style="
-                  display: flex;
-                  gap: 20px;
-                  margin-bottom: 20px;
-                  flex-wrap: wrap;
-                ">
-                            <div class="product-item" style="display: flex; gap: 15px; width: calc(50% - 10px)">
-                                <img src="https://via.placeholder.com/80" alt="Produit"
-                                    style="
-                      width: 80px;
-                      height: 80px;
-                      object-fit: cover;
-                      border-radius: 10px;
-                    " />
-                                <div class="product-details">
-                                    <h4 style="margin: 0 0 5px; font-size: 1rem">
-                                        Canapé d'angle en velours
-                                    </h4>
-                                    <p style="margin: 0; color: #666; font-size: 0.9rem">
-                                        Quantité: 1
-                                    </p>
-                                    <p style="margin: 5px 0 0; font-weight: 600; color: #1f4e5f">
-                                        499,99 €
-                                    </p>
-                                </div>
+                        <div class="order-body" style="padding: 20px;">
+                            <div class="order-products" style="display: flex; flex-wrap: wrap; gap: 20px;">
+                                @foreach ($order->items as $item)
+                                    <div class="product-item"
+                                        style="display: flex; gap: 15px; width: calc(50% - 10px);">
+                                        <img src="{{ $item->image ?? 'https://via.placeholder.com/80' }}"
+                                            style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px;">
+                                        <div class="product-details">
+                                            <h4 style="margin: 0;">{{ $item->name }}</h4>
+                                            <p style="color: #666;">Quantité : {{ $item->quantity }}</p>
+                                            <p style="font-weight: 600; color: #1f4e5f;">
+                                                {{ number_format($item->price, 2, ',', ' ') }} €</p>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
 
-                            <div class="product-item" style="display: flex; gap: 15px; width: calc(50% - 10px)">
-                                <img src="https://via.placeholder.com/80" alt="Produit"
-                                    style="
-                      width: 80px;
-                      height: 80px;
-                      object-fit: cover;
-                      border-radius: 10px;
-                    " />
-                                <div class="product-details">
-                                    <h4 style="margin: 0 0 5px; font-size: 1rem">
-                                        Table basse en bois massif
-                                    </h4>
-                                    <p style="margin: 0; color: #666; font-size: 0.9rem">
-                                        Quantité: 1
+                            <div class="order-summary"
+                                style="display: flex; justify-content: space-between; border-top: 1px solid #f1f1f1; padding-top: 20px;">
+                                <div class="delivery-info">
+                                    <h4 style="margin: 0 0 10px;"><i class="fas fa-truck"
+                                            style="margin-right: 10px;"></i>Livraison</h4>
+                                    <p style="color: #666;">
+                                        @if ($order->status == 'delivered')
+                                            Livrée le {{ $order->updated_at->format('d/m/Y') }}
+                                        @elseif($order->status == 'cancelled')
+                                            Annulée le {{ $order->updated_at->format('d/m/Y') }}
+                                        @else
+                                            En cours de traitement
+                                        @endif
                                     </p>
-                                    <p style="margin: 5px 0 0; font-weight: 600; color: #1f4e5f">
-                                        149,99 €
-                                    </p>
+                                </div>
+
+                                <div class="order-total" style="text-align: right;">
+                                    <p style="margin: 0 0 5px; color: #666;">Total commande :</p>
+                                    <h3 style="color: #1f4e5f;">{{ number_format($order->total, 2, ',', ' ') }} €</h3>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="order-summary"
-                            style="
-                  display: flex;
-                  justify-content: space-between;
-                  border-top: 1px solid #f1f1f1;
-                  padding-top: 20px;
-                ">
-                            <div class="delivery-info">
-                                <h4 style="margin: 0 0 10px; font-size: 1rem; color: #1f4e5f">
-                                    <i class="fas fa-truck" style="margin-right: 10px"></i>Livraison prévue
-                                </h4>
-                                <p style="margin: 0; color: #666">
-                                    Entre le 25 et 30 octobre 2023
-                                </p>
-                            </div>
-
-                            <div class="order-total" style="text-align: right">
-                                <p style="margin: 0 0 5px; color: #666">Total commande:</p>
-                                <h3 style="margin: 0; color: #1f4e5f; font-size: 1.5rem">
-                                    649,98 €
-                                </h3>
-                            </div>
-                        </div>
                     </div>
-                </div>
-
-                <!-- Commande 2 - Livrée -->
-                <div class="order-card" data-status="delivered"
-                    style="
-              background: white;
-              border-radius: 15px;
-              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-              margin-bottom: 25px;
-              overflow: hidden;
-              cursor: pointer;
-            ">
-                    <div class="order-header"
-                        style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 20px;
-                border-bottom: 1px solid #f1f1f1;
-                background: #f9f9f9;
-              ">
-                        <div class="order-info">
-                            <h3 style="margin: 0; color: #1f4e5f; font-size: 1.2rem">
-                                Commande #KL-2023-11876
-                            </h3>
-                            <p style="margin: 5px 0 0; color: #666; font-size: 0.9rem">
-                                Passée le 5 septembre 2023
-                            </p>
-                        </div>
-                        <div class="order-status"
-                            style="
-                  background: #4caf50;
-                  color: white;
-                  padding: 8px 15px;
-                  border-radius: 20px;
-                  font-size: 0.9rem;
-                  font-weight: 500;
-                ">
-                            Livrée
-                        </div>
-                    </div>
-
-                    <div class="order-body" style="padding: 20px">
-                        <div class="order-products"
-                            style="
-                  display: flex;
-                  gap: 20px;
-                  margin-bottom: 20px;
-                  flex-wrap: wrap;
-                ">
-                            <div class="product-item" style="display: flex; gap: 15px; width: calc(50% - 10px)">
-                                <img src="https://via.placeholder.com/80" alt="Produit"
-                                    style="
-                      width: 80px;
-                      height: 80px;
-                      object-fit: cover;
-                      border-radius: 10px;
-                    " />
-                                <div class="product-details">
-                                    <h4 style="margin: 0 0 5px; font-size: 1rem">
-                                        Lampe design en métal
-                                    </h4>
-                                    <p style="margin: 0; color: #666; font-size: 0.9rem">
-                                        Quantité: 2
-                                    </p>
-                                    <p style="margin: 5px 0 0; font-weight: 600; color: #1f4e5f">
-                                        79,98 €
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="order-summary"
-                            style="
-                  display: flex;
-                  justify-content: space-between;
-                  border-top: 1px solid #f1f1f1;
-                  padding-top: 20px;
-                ">
-                            <div class="delivery-info">
-                                <h4 style="margin: 0 0 10px; font-size: 1rem; color: #1f4e5f">
-                                    <i class="fas fa-check-circle"
-                                        style="margin-right: 10px; color: #4caf50"></i>Livrée le 12 septembre 2023
-                                </h4>
-                                <p style="margin: 0; color: #666">
-                                    Adresse: 12 Rue des Lilas, 75000 Paris
-                                </p>
-                            </div>
-
-                            <div class="order-total" style="text-align: right">
-                                <p style="margin: 0 0 5px; color: #666">Total commande:</p>
-                                <h3 style="margin: 0; color: #1f4e5f; font-size: 1.5rem">
-                                    79,98 €
-                                </h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Commande 3 - Annulée -->
-                <div class="order-card" data-status="cancelled"
-                    style="
-              background: white;
-              border-radius: 15px;
-              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-              margin-bottom: 25px;
-              overflow: hidden;
-              cursor: pointer;
-            ">
-                    <div class="order-header"
-                        style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 20px;
-                border-bottom: 1px solid #f1f1f1;
-                background: #f9f9f9;
-              ">
-                        <div class="order-info">
-                            <h3 style="margin: 0; color: #1f4e5f; font-size: 1.2rem">
-                                Commande #KL-2023-09542
-                            </h3>
-                            <p style="margin: 5px 0 0; color: #666; font-size: 0.9rem">
-                                Passée le 15 août 2023
-                            </p>
-                        </div>
-                        <div class="order-status"
-                            style="
-                  background: #f44336;
-                  color: white;
-                  padding: 8px 15px;
-                  border-radius: 20px;
-                  font-size: 0.9rem;
-                  font-weight: 500;
-                ">
-                            Annulée
-                        </div>
-                    </div>
-
-                    <div class="order-body" style="padding: 20px">
-                        <div class="order-products"
-                            style="
-                  display: flex;
-                  gap: 20px;
-                  margin-bottom: 20px;
-                  flex-wrap: wrap;
-                ">
-                            <div class="product-item" style="display: flex; gap: 15px; width: 100%">
-                                <img src="https://via.placeholder.com/80" alt="Produit"
-                                    style="
-                      width: 80px;
-                      height: 80px;
-                      object-fit: cover;
-                      border-radius: 10px;
-                    " />
-                                <div class="product-details">
-                                    <h4 style="margin: 0 0 5px; font-size: 1rem">
-                                        Bibliothèque murale 120cm
-                                    </h4>
-                                    <p style="margin: 0; color: #666; font-size: 0.9rem">
-                                        Quantité: 1
-                                    </p>
-                                    <p style="margin: 5px 0 0; font-weight: 600; color: #1f4e5f">
-                                        129,99 €
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="order-summary"
-                            style="
-                  display: flex;
-                  justify-content: space-between;
-                  border-top: 1px solid #f1f1f1;
-                  padding-top: 20px;
-                ">
-                            <div class="delivery-info">
-                                <h4 style="margin: 0 0 10px; font-size: 1rem; color: #1f4e5f">
-                                    <i class="fas fa-times-circle"
-                                        style="margin-right: 10px; color: #f44336"></i>Annulée le 18 août 2023
-                                </h4>
-                                <p style="margin: 0; color: #666">
-                                    Remboursement effectué le 20 août 2023
-                                </p>
-                            </div>
-
-                            <div class="order-total" style="text-align: right">
-                                <p style="margin: 0 0 5px; color: #666">Total commande:</p>
-                                <h3 style="margin: 0; color: #1f4e5f; font-size: 1.5rem">
-                                    129,99 €
-                                </h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Commande 4 - En cours -->
-                <div class="order-card" data-status="pending"
-                    style="
-              background: white;
-              border-radius: 15px;
-              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-              margin-bottom: 25px;
-              overflow: hidden;
-              cursor: pointer;
-            ">
-                    <div class="order-header"
-                        style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 20px;
-                border-bottom: 1px solid #f1f1f1;
-                background: #f9f9f9;
-              ">
-                        <div class="order-info">
-                            <h3 style="margin: 0; color: #1f4e5f; font-size: 1.2rem">
-                                Commande #KL-2023-12879
-                            </h3>
-                            <p style="margin: 5px 0 0; color: #666; font-size: 0.9rem">
-                                Passée le 20 octobre 2023
-                            </p>
-                        </div>
-                        <div class="order-status"
-                            style="
-                  background: #4a6bff;
-                  color: white;
-                  padding: 8px 15px;
-                  border-radius: 20px;
-                  font-size: 0.9rem;
-                  font-weight: 500;
-                ">
-                            En préparation
-                        </div>
-                    </div>
-
-                    <div class="order-body" style="padding: 20px">
-                        <div class="order-products"
-                            style="
-                  display: flex;
-                  gap: 20px;
-                  margin-bottom: 20px;
-                  flex-wrap: wrap;
-                ">
-                            <div class="product-item" style="display: flex; gap: 15px; width: 100%">
-                                <img src="https://via.placeholder.com/80" alt="Produit"
-                                    style="
-                      width: 80px;
-                      height: 80px;
-                      object-fit: cover;
-                      border-radius: 10px;
-                    " />
-                                <div class="product-details">
-                                    <h4 style="margin: 0 0 5px; font-size: 1rem">
-                                        Chaise de bureau ergonomique
-                                    </h4>
-                                    <p style="margin: 0; color: #666; font-size: 0.9rem">
-                                        Quantité: 1
-                                    </p>
-                                    <p style="margin: 5px 0 0; font-weight: 600; color: #1f4e5f">
-                                        229,99 €
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="order-summary"
-                            style="
-                  display: flex;
-                  justify-content: space-between;
-                  border-top: 1px solid #f1f1f1;
-                  padding-top: 20px;
-                ">
-                            <div class="delivery-info">
-                                <h4 style="margin: 0 0 10px; font-size: 1rem; color: #1f4e5f">
-                                    <i class="fas fa-box" style="margin-right: 10px"></i>En
-                                    préparation
-                                </h4>
-                                <p style="margin: 0; color: #666">
-                                    Expédition prévue sous 2-3 jours
-                                </p>
-                            </div>
-
-                            <div class="order-total" style="text-align: right">
-                                <p style="margin: 0 0 5px; color: #666">Total commande:</p>
-                                <h3 style="margin: 0; color: #1f4e5f; font-size: 1.5rem">
-                                    229,99 €
-                                </h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @empty
+                    <p>Aucune commande pour l'instant.</p>
+                @endforelse
             </div>
 
             <div class="pagination" style="display: flex; justify-content: center; margin-top: 40px">
@@ -578,603 +234,7 @@
     </section>
 
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Animation au chargement
-            const cards = document.querySelectorAll(".order-card");
-            cards.forEach((card, index) => {
-                card.style.opacity = "0";
-                card.style.transform = "translateY(20px)";
-                card.style.transition = "all 0.5s ease " + index * 0.1 + "s";
 
-                setTimeout(() => {
-                    card.style.opacity = "1";
-                    card.style.transform = "translateY(0)";
-                }, 100);
-            });
-
-            // Filtrage des commandes
-            const filterButtons = document.querySelectorAll(".filter-btn");
-            const orderCards = document.querySelectorAll(".order-card");
-
-            filterButtons.forEach((button) => {
-                button.addEventListener("click", function() {
-                    // Mise à jour de l'apparence des boutons
-                    filterButtons.forEach((btn) => {
-                        btn.style.background = "#f1f1f1";
-                        btn.style.color = "#333";
-                        btn.classList.remove("active");
-                    });
-
-                    this.style.background = "#1F4E5F";
-                    this.style.color = "white";
-                    this.classList.add("active");
-
-                    // Récupération du filtre sélectionné
-                    const filter = this.getAttribute("data-filter");
-
-                    // Filtrage des cartes de commande
-                    orderCards.forEach((card) => {
-                        if (filter === "all") {
-                            card.style.display = "block";
-                        } else {
-                            if (card.getAttribute("data-status") === filter) {
-                                card.style.display = "block";
-                            } else {
-                                card.style.display = "none";
-                            }
-                        }
-
-                        // Réappliquer l'animation
-                        card.style.opacity = "0";
-                        card.style.transform = "translateY(20px)";
-                        setTimeout(() => {
-                            card.style.opacity = "1";
-                            card.style.transform = "translateY(0)";
-                        }, 100);
-                    });
-                });
-            });
-
-            // Affichage des détails au clic sur une carte
-            orderCards.forEach((card) => {
-                card.addEventListener("click", function() {
-                    // Ne rien faire si on clique sur un bouton ou un lien
-                    if (
-                        event.target.tagName === "BUTTON" ||
-                        event.target.tagName === "A"
-                    ) {
-                        return;
-                    }
-
-                    // Ici vous pourriez rediriger vers une page de détails
-                    // ou afficher un modal avec plus d'informations
-                    console.log(
-                        "Voir les détails de la commande:",
-                        this.querySelector("h3").textContent
-                    );
-                });
-            });
-        });
-    </script>
-    <script>
-        // Script pour gérer l'affichage mobile
-        document.addEventListener("DOMContentLoaded", function() {
-            // Gestion du menu burger
-            const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
-            const mobileMenuModal = document.getElementById("mobileMenuModal");
-            const closeMobileMenu = document.getElementById("closeMobileMenu");
-
-            if (mobileMenuToggle && mobileMenuModal) {
-                mobileMenuToggle.addEventListener("click", function() {
-                    mobileMenuModal.style.display = "block";
-                    document.body.style.overflow = "hidden";
-                });
-            }
-
-            if (closeMobileMenu && mobileMenuModal) {
-                closeMobileMenu.addEventListener("click", function() {
-                    mobileMenuModal.style.display = "none";
-                    document.body.style.overflow = "auto";
-                });
-            }
-
-            // Fermer le modal si on clique en dehors
-            mobileMenuModal.addEventListener("click", function(e) {
-                if (e.target === mobileMenuModal) {
-                    mobileMenuModal.style.display = "none";
-                    document.body.style.overflow = "auto";
-                }
-            });
-
-            // Gestion des menus déroulants desktop
-            const toggleButtons = document.querySelectorAll('[id$="Toggle"]');
-            toggleButtons.forEach((button) => {
-                button.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                    const dropdownId = this.id.replace("Toggle", "");
-                    const dropdown = document.getElementById(dropdownId);
-                    const isVisible = dropdown.style.display === "block";
-
-                    // Fermer tous les autres menus
-                    document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                        if (menu.id !== dropdownId) {
-                            menu.style.display = "none";
-                        }
-                    });
-
-                    // Basculer l'affichage du menu courant
-                    dropdown.style.display = isVisible ? "none" : "block";
-                });
-            });
-
-            // Fermer les menus déroulants quand on clique ailleurs
-            document.addEventListener("click", function() {
-                document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                    menu.style.display = "none";
-                });
-            });
-
-            // Empêcher la fermeture quand on clique dans le menu
-            document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                menu.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                });
-            });
-
-            // Fonction pour changer la langue
-            window.changeLanguage = function(lang) {
-                console.log("Changement de langue vers:", lang);
-                // Ici vous ajouteriez la logique pour changer la langue
-                document.querySelectorAll(".language-code").forEach((el) => {
-                    el.textContent = lang.toUpperCase();
-                });
-                document.getElementById("mobileMenuModal").style.display = "none";
-                document.body.style.overflow = "auto";
-            };
-        });
-    </script>
-
-    <script>
-        // Liste complète des pays avec leurs devises (exemple partiel)
-        const countries = [{
-                code: "FR",
-                name: "France",
-                currency: "EUR",
-                symbol: "€",
-                flag: "fr",
-            },
-            {
-                code: "DE",
-                name: "Allemagne",
-                currency: "EUR",
-                symbol: "€",
-                flag: "de",
-            },
-            {
-                code: "US",
-                name: "États-Unis",
-                currency: "USD",
-                symbol: "$",
-                flag: "us",
-            },
-            {
-                code: "GB",
-                name: "Royaume-Uni",
-                currency: "GBP",
-                symbol: "£",
-                flag: "gb",
-            },
-            {
-                code: "JP",
-                name: "Japon",
-                currency: "JPY",
-                symbol: "¥",
-                flag: "jp"
-            },
-            {
-                code: "CA",
-                name: "Canada",
-                currency: "CAD",
-                symbol: "$",
-                flag: "ca",
-            },
-            {
-                code: "AU",
-                name: "Australie",
-                currency: "AUD",
-                symbol: "$",
-                flag: "au",
-            },
-            {
-                code: "CN",
-                name: "Chine",
-                currency: "CNY",
-                symbol: "¥",
-                flag: "cn"
-            },
-            {
-                code: "BR",
-                name: "Brésil",
-                currency: "BRL",
-                symbol: "R$",
-                flag: "br",
-            },
-            {
-                code: "IN",
-                name: "Inde",
-                currency: "INR",
-                symbol: "₹",
-                flag: "in"
-            },
-            // Ajoutez ici tous les autres pays nécessaires
-        ];
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const countryToggle = document.getElementById("countryToggle");
-            const dropdownCountry = document.getElementById("dropdownCountry");
-            const countryList = document.getElementById("countryList");
-            const countrySearch = document.getElementById("countrySearch");
-            const closeCountryMenu = document.getElementById("closeCountryMenu");
-
-            // Générer la liste des pays
-            function generateCountryList(filter = "") {
-                countryList.innerHTML = "";
-                const filtered = filter ?
-                    countries.filter((c) =>
-                        c.name.toLowerCase().includes(filter.toLowerCase())
-                    ) :
-                    countries;
-
-                filtered.forEach((country) => {
-                    const countryElement = document.createElement("div");
-                    countryElement.className = "country-option";
-                    countryElement.style.display = "flex";
-                    countryElement.style.alignItems = "center";
-                    countryElement.style.padding = "10px 15px";
-                    countryElement.style.cursor = "pointer";
-                    countryElement.style.borderBottom = "1px solid #f5f5f5";
-                    countryElement.setAttribute("data-country", country.code);
-                    countryElement.setAttribute("data-currency", country.currency);
-
-                    countryElement.innerHTML = `
-                <span style="width: 25px; height: 18px; background-image: url('https://flagcdn.com/w20/${country.flag}.png'); background-size: cover; margin-right: 10px;"></span>
-                <span style="flex: 1; font-size: 14px;">${country.name}</span>
-                <span style="color: #666; font-size: 13px;">${country.symbol} ${country.currency}</span>
-            `;
-
-                    countryElement.addEventListener("click", () =>
-                        selectCountry(country)
-                    );
-                    countryList.appendChild(countryElement);
-                });
-            }
-
-            // Sélectionner un pays
-            function selectCountry(country) {
-                document.querySelector(
-                    ".country-flag"
-                ).style.backgroundImage = `url('https://flagcdn.com/w20/${country.flag}.png')`;
-                document.querySelector(".country-code").textContent = country.code;
-                dropdownCountry.style.display = "none";
-
-                // Ici vous pouvez implémenter la conversion
-                convertPrices(country.currency);
-                console.log(
-                    `Pays sélectionné: ${country.name}, Devise: ${country.currency}`
-                );
-            }
-
-            // Fonction de conversion (exemple)
-            function convertPrices(targetCurrency) {
-                // 1. Récupérer le taux de change depuis une API (ex: https://exchangerate-api.com)
-                // 2. Convertir tous les prix sur la page
-                // Exemple simplifié:
-                fetch(`https://api.exchangerate-api.com/v4/latest/EUR`)
-                    .then((response) => response.json())
-                    .then((data) => {
-                        const rate = data.rates[targetCurrency];
-                        if (rate) {
-                            document.querySelectorAll(".price").forEach((priceElement) => {
-                                const originalPrice = parseFloat(
-                                    priceElement.getAttribute("data-original-price")
-                                );
-                                const convertedPrice = (originalPrice * rate).toFixed(2);
-                                priceElement.textContent = `${convertedPrice} ${targetCurrency}`;
-                            });
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Erreur de conversion:", error);
-                        // Solution de repli: afficher les prix dans la devise d'origine
-                    });
-            }
-
-            // Gestion des événements
-            countryToggle.addEventListener("click", (e) => {
-                e.stopPropagation();
-                dropdownCountry.style.display =
-                    dropdownCountry.style.display === "block" ? "none" : "block";
-                if (dropdownCountry.style.display === "block") {
-                    generateCountryList();
-                    countrySearch.focus();
-                }
-            });
-
-            closeCountryMenu.addEventListener("click", () => {
-                dropdownCountry.style.display = "none";
-            });
-
-            countrySearch.addEventListener("input", (e) => {
-                generateCountryList(e.target.value);
-            });
-
-            document.addEventListener("click", (e) => {
-                if (!e.target.closest(".country-dropdown")) {
-                    dropdownCountry.style.display = "none";
-                }
-            });
-
-            // Initialisation
-            generateCountryList();
-        });
-    </script>
-
-    <script>
-        // Liste complète des pays (exemple partiel)
-        const countrie = [{
-                code: "FR",
-                name: "France",
-                currency: "EUR",
-                symbol: "€",
-                flag: "fr",
-            },
-            {
-                code: "DE",
-                name: "Allemagne",
-                currency: "EUR",
-                symbol: "€",
-                flag: "de",
-            },
-            {
-                code: "US",
-                name: "États-Unis",
-                currency: "USD",
-                symbol: "$",
-                flag: "us",
-            },
-            // ... autres pays ...
-        ];
-
-        // Dictionnaire de traduction
-        const translations = {
-            fr: {
-                search_placeholder: "Rechercher des meubles, décoration...",
-                select_country: "Sélectionnez votre pays",
-                search_country: "Rechercher un pays...",
-            },
-            en: {
-                search_placeholder: "Search for furniture, decor...",
-                select_country: "Select your country",
-                search_country: "Search for a country...",
-            },
-            es: {
-                search_placeholder: "Buscar muebles, decoración...",
-                select_country: "Selecciona tu país",
-                search_country: "Buscar un país...",
-            },
-        };
-
-        // Langue par défaut
-        let currentLanguage = "fr";
-
-        // Fonction pour changer la langue
-        function changeLanguage(lang) {
-            currentLanguage = lang;
-            document.querySelector(".language-code").textContent =
-                lang.toUpperCase();
-            document.getElementById("dropdownLanguage").style.display = "none";
-
-            // Mettre à jour les textes traduits
-            document.querySelectorAll(".translate").forEach((el) => {
-                const key = el.getAttribute("data-key");
-                el.textContent = translations[lang][key] || translations["fr"][key];
-            });
-
-            // Mettre à jour le placeholder de recherche
-            document.querySelector(".search-container input").placeholder =
-                translations[lang]["search_placeholder"];
-            document.getElementById("countrySearch").placeholder =
-                translations[lang]["search_country"];
-
-            // Sauvegarder la préférence
-            localStorage.setItem("preferredLanguage", lang);
-        }
-
-        // Initialisation
-        document.addEventListener("DOMContentLoaded", function() {
-            // Récupérer la langue sauvegardée ou détecter la langue du navigateur
-            const savedLanguage = localStorage.getItem("preferredLanguage");
-            const browserLanguage = navigator.language.slice(0, 2);
-
-            if (savedLanguage) {
-                changeLanguage(savedLanguage);
-            } else if (translations[browserLanguage]) {
-                changeLanguage(browserLanguage);
-            }
-
-            // Gestion des menus déroulants
-            const languageToggle = document.getElementById("languageToggle");
-            const dropdownLanguage = document.getElementById("dropdownLanguage");
-
-            languageToggle.addEventListener("click", (e) => {
-                e.stopPropagation();
-                dropdownLanguage.style.display =
-                    dropdownLanguage.style.display === "block" ? "none" : "block";
-            });
-
-            document.addEventListener("click", (e) => {
-                if (!e.target.closest(".language-dropdown")) {
-                    dropdownLanguage.style.display = "none";
-                }
-            });
-
-            // ... (le reste de votre code existant pour les pays) ...
-        });
-
-        // ... (le reste de votre code JavaScript existant) ...
-    </script>
-
-    <style>
-        /* Styles existants... */
-
-        /* Nouveaux styles pour la sélection de langue */
-        .language-dropdown .dropdown-menu div:hover {
-            background-color: #f8f8f8;
-        }
-
-        /* Styles responsives */
-        @media (max-width: 992px) {
-            .search-container {
-                order: 1;
-                flex: 1 1 100% !important;
-                max-width: 100% !important;
-                margin: 10px 0 !important;
-            }
-
-            .header-container {
-                flex-wrap: wrap !important;
-            }
-
-            .country-code,
-            .language-code {
-                display: none;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header-icons {
-                gap: 8px !important;
-            }
-        }
-    </style>
-
-    <script>
-        let lastScrollTop = 0;
-        const header = document.getElementById("mainHeader");
-
-        window.addEventListener("scroll", function() {
-            const scrollTop =
-                window.pageYOffset || document.documentElement.scrollTop;
-
-            if (scrollTop > lastScrollTop) {
-                // On descend → cacher le header
-                header.style.top = "-150px"; // adapte cette valeur à la hauteur de ton header
-            } else {
-                // On remonte → afficher le header
-                header.style.top = "0";
-            }
-
-            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // pour éviter valeurs négatives
-        });
-    </script>
-
-    <script>
-        // Gestion des dropdowns
-        function setupDropdown(toggleId, dropdownId) {
-            const toggle = document.getElementById(toggleId);
-            const dropdown = document.getElementById(dropdownId);
-
-            toggle.addEventListener("click", function(e) {
-                e.stopPropagation();
-                // Ferme tous les autres dropdowns
-                document.querySelectorAll(".dropdown-menu").forEach((d) => {
-                    if (d.id !== dropdownId) d.style.display = "none";
-                });
-                // Ouvre/ferme le dropdown actuel
-                dropdown.style.display =
-                    dropdown.style.display === "block" ? "none" : "block";
-            });
-        }
-
-        // Initialisation des dropdowns
-        setupDropdown("userToggle", "dropdownUser");
-        setupDropdown("helpToggle", "dropdownHelp");
-
-        // Ferme les dropdowns quand on clique ailleurs
-        document.addEventListener("click", function() {
-            document.querySelectorAll(".dropdown-menu").forEach((d) => {
-                d.style.display = "none";
-            });
-        });
-
-        // Animation du point de notification utilisateur
-        setInterval(() => {
-            const pulse = document.querySelector(".user-pulse");
-            if (Math.random() > 0.8) {
-                pulse.style.display = "block";
-                setTimeout(() => {
-                    pulse.style.display = "none";
-                }, 5000);
-            }
-        }, 30000);
-    </script>
-
-    <script>
-        // Script pour le menu déroulant
-        document
-            .querySelector(".help-dropdown button")
-            .addEventListener("click", function(e) {
-                e.stopPropagation();
-                const dropdown = document.querySelector(".dropdown-content");
-                dropdown.style.display =
-                    dropdown.style.display === "block" ? "none" : "block";
-            });
-
-        // Fermer le menu si on clique ailleurs
-        document.addEventListener("click", function() {
-            document.querySelector(".dropdown-content").style.display = "none";
-        });
-
-        // Empêcher la fermeture quand on clique dans le menu
-        document
-            .querySelector(".dropdown-content")
-            .addEventListener("click", function(e) {
-                e.stopPropagation();
-            });
-    </script>
-
-    <script>
-        // Script pour le menu déroulant
-        document
-            .querySelector(".help-dropdown button")
-            .addEventListener("click", function(e) {
-                e.stopPropagation();
-                const dropdown = document.querySelector(".dropdown-content");
-                dropdown.style.display =
-                    dropdown.style.display === "block" ? "none" : "block";
-            });
-
-        // Fermer le menu si on clique ailleurs
-        document.addEventListener("click", function() {
-            document.querySelector(".dropdown-content").style.display = "none";
-        });
-
-        // Empêcher la fermeture quand on clique dans le menu
-        document
-            .querySelector(".dropdown-content")
-            .addEventListener("click", function(e) {
-                e.stopPropagation();
-            });
-    </script>
-
-    <script>
-        // Chargement différé pour améliorer les performances
-        document.addEventListener("DOMContentLoaded", function() {
-            const iframe = document.querySelector(".youtube-container iframe");
-            iframe.setAttribute("src", iframe.getAttribute("src"));
-        });
-    </script>
 
     <div id="checkout-modal" class="modal">
         <div class="modal-content">
@@ -2090,6 +1150,570 @@
     </footer>
 
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Animation au chargement
+            const cards = document.querySelectorAll(".order-card");
+            cards.forEach((card, index) => {
+                card.style.opacity = "0";
+                card.style.transform = "translateY(20px)";
+                card.style.transition = "all 0.5s ease " + index * 0.1 + "s";
+
+                setTimeout(() => {
+                    card.style.opacity = "1";
+                    card.style.transform = "translateY(0)";
+                }, 100);
+            });
+
+            // Filtrage des commandes
+            const filterButtons = document.querySelectorAll(".filter-btn");
+            const orderCards = document.querySelectorAll(".order-card");
+
+            filterButtons.forEach((button) => {
+                button.addEventListener("click", function() {
+                    // Mise à jour de l'apparence des boutons
+                    filterButtons.forEach((btn) => {
+                        btn.style.background = "#f1f1f1";
+                        btn.style.color = "#333";
+                        btn.classList.remove("active");
+                    });
+
+                    this.style.background = "#1F4E5F";
+                    this.style.color = "white";
+                    this.classList.add("active");
+
+                    // Récupération du filtre sélectionné
+                    const filter = this.getAttribute("data-filter");
+
+                    // Filtrage des cartes de commande
+                    orderCards.forEach((card) => {
+                        if (filter === "all") {
+                            card.style.display = "block";
+                        } else {
+                            if (card.getAttribute("data-status") === filter) {
+                                card.style.display = "block";
+                            } else {
+                                card.style.display = "none";
+                            }
+                        }
+
+                        // Réappliquer l'animation
+                        card.style.opacity = "0";
+                        card.style.transform = "translateY(20px)";
+                        setTimeout(() => {
+                            card.style.opacity = "1";
+                            card.style.transform = "translateY(0)";
+                        }, 100);
+                    });
+                });
+            });
+
+            // Affichage des détails au clic sur une carte
+            orderCards.forEach((card) => {
+                card.addEventListener("click", function() {
+                    // Ne rien faire si on clique sur un bouton ou un lien
+                    if (
+                        event.target.tagName === "BUTTON" ||
+                        event.target.tagName === "A"
+                    ) {
+                        return;
+                    }
+
+                    // Ici vous pourriez rediriger vers une page de détails
+                    // ou afficher un modal avec plus d'informations
+                    console.log(
+                        "Voir les détails de la commande:",
+                        this.querySelector("h3").textContent
+                    );
+                });
+            });
+        });
+    </script>
+    <script>
+        // Script pour gérer l'affichage mobile
+        document.addEventListener("DOMContentLoaded", function() {
+            // Gestion du menu burger
+            const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
+            const mobileMenuModal = document.getElementById("mobileMenuModal");
+            const closeMobileMenu = document.getElementById("closeMobileMenu");
+
+            if (mobileMenuToggle && mobileMenuModal) {
+                mobileMenuToggle.addEventListener("click", function() {
+                    mobileMenuModal.style.display = "block";
+                    document.body.style.overflow = "hidden";
+                });
+            }
+
+            if (closeMobileMenu && mobileMenuModal) {
+                closeMobileMenu.addEventListener("click", function() {
+                    mobileMenuModal.style.display = "none";
+                    document.body.style.overflow = "auto";
+                });
+            }
+
+            // Fermer le modal si on clique en dehors
+            mobileMenuModal.addEventListener("click", function(e) {
+                if (e.target === mobileMenuModal) {
+                    mobileMenuModal.style.display = "none";
+                    document.body.style.overflow = "auto";
+                }
+            });
+
+            // Gestion des menus déroulants desktop
+            const toggleButtons = document.querySelectorAll('[id$="Toggle"]');
+            toggleButtons.forEach((button) => {
+                button.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    const dropdownId = this.id.replace("Toggle", "");
+                    const dropdown = document.getElementById(dropdownId);
+                    const isVisible = dropdown.style.display === "block";
+
+                    // Fermer tous les autres menus
+                    document.querySelectorAll(".dropdown-menu").forEach((menu) => {
+                        if (menu.id !== dropdownId) {
+                            menu.style.display = "none";
+                        }
+                    });
+
+                    // Basculer l'affichage du menu courant
+                    dropdown.style.display = isVisible ? "none" : "block";
+                });
+            });
+
+            // Fermer les menus déroulants quand on clique ailleurs
+            document.addEventListener("click", function() {
+                document.querySelectorAll(".dropdown-menu").forEach((menu) => {
+                    menu.style.display = "none";
+                });
+            });
+
+            // Empêcher la fermeture quand on clique dans le menu
+            document.querySelectorAll(".dropdown-menu").forEach((menu) => {
+                menu.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                });
+            });
+
+            // Fonction pour changer la langue
+            window.changeLanguage = function(lang) {
+                console.log("Changement de langue vers:", lang);
+                // Ici vous ajouteriez la logique pour changer la langue
+                document.querySelectorAll(".language-code").forEach((el) => {
+                    el.textContent = lang.toUpperCase();
+                });
+                document.getElementById("mobileMenuModal").style.display = "none";
+                document.body.style.overflow = "auto";
+            };
+        });
+    </script>
+
+    <script>
+        // Liste complète des pays avec leurs devises (exemple partiel)
+        const countries = [{
+                code: "FR",
+                name: "France",
+                currency: "EUR",
+                symbol: "€",
+                flag: "fr",
+            },
+            {
+                code: "DE",
+                name: "Allemagne",
+                currency: "EUR",
+                symbol: "€",
+                flag: "de",
+            },
+            {
+                code: "US",
+                name: "États-Unis",
+                currency: "USD",
+                symbol: "$",
+                flag: "us",
+            },
+            {
+                code: "GB",
+                name: "Royaume-Uni",
+                currency: "GBP",
+                symbol: "£",
+                flag: "gb",
+            },
+            {
+                code: "JP",
+                name: "Japon",
+                currency: "JPY",
+                symbol: "¥",
+                flag: "jp"
+            },
+            {
+                code: "CA",
+                name: "Canada",
+                currency: "CAD",
+                symbol: "$",
+                flag: "ca",
+            },
+            {
+                code: "AU",
+                name: "Australie",
+                currency: "AUD",
+                symbol: "$",
+                flag: "au",
+            },
+            {
+                code: "CN",
+                name: "Chine",
+                currency: "CNY",
+                symbol: "¥",
+                flag: "cn"
+            },
+            {
+                code: "BR",
+                name: "Brésil",
+                currency: "BRL",
+                symbol: "R$",
+                flag: "br",
+            },
+            {
+                code: "IN",
+                name: "Inde",
+                currency: "INR",
+                symbol: "₹",
+                flag: "in"
+            },
+            // Ajoutez ici tous les autres pays nécessaires
+        ];
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const countryToggle = document.getElementById("countryToggle");
+            const dropdownCountry = document.getElementById("dropdownCountry");
+            const countryList = document.getElementById("countryList");
+            const countrySearch = document.getElementById("countrySearch");
+            const closeCountryMenu = document.getElementById("closeCountryMenu");
+
+            // Générer la liste des pays
+            function generateCountryList(filter = "") {
+                countryList.innerHTML = "";
+                const filtered = filter ?
+                    countries.filter((c) =>
+                        c.name.toLowerCase().includes(filter.toLowerCase())
+                    ) :
+                    countries;
+
+                filtered.forEach((country) => {
+                    const countryElement = document.createElement("div");
+                    countryElement.className = "country-option";
+                    countryElement.style.display = "flex";
+                    countryElement.style.alignItems = "center";
+                    countryElement.style.padding = "10px 15px";
+                    countryElement.style.cursor = "pointer";
+                    countryElement.style.borderBottom = "1px solid #f5f5f5";
+                    countryElement.setAttribute("data-country", country.code);
+                    countryElement.setAttribute("data-currency", country.currency);
+
+                    countryElement.innerHTML = `
+                <span style="width: 25px; height: 18px; background-image: url('https://flagcdn.com/w20/${country.flag}.png'); background-size: cover; margin-right: 10px;"></span>
+                <span style="flex: 1; font-size: 14px;">${country.name}</span>
+                <span style="color: #666; font-size: 13px;">${country.symbol} ${country.currency}</span>
+            `;
+
+                    countryElement.addEventListener("click", () =>
+                        selectCountry(country)
+                    );
+                    countryList.appendChild(countryElement);
+                });
+            }
+
+            // Sélectionner un pays
+            function selectCountry(country) {
+                document.querySelector(
+                    ".country-flag"
+                ).style.backgroundImage = `url('https://flagcdn.com/w20/${country.flag}.png')`;
+                document.querySelector(".country-code").textContent = country.code;
+                dropdownCountry.style.display = "none";
+
+                // Ici vous pouvez implémenter la conversion
+                convertPrices(country.currency);
+                console.log(
+                    `Pays sélectionné: ${country.name}, Devise: ${country.currency}`
+                );
+            }
+
+            // Fonction de conversion (exemple)
+            function convertPrices(targetCurrency) {
+                // 1. Récupérer le taux de change depuis une API (ex: https://exchangerate-api.com)
+                // 2. Convertir tous les prix sur la page
+                // Exemple simplifié:
+                fetch(`https://api.exchangerate-api.com/v4/latest/EUR`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        const rate = data.rates[targetCurrency];
+                        if (rate) {
+                            document.querySelectorAll(".price").forEach((priceElement) => {
+                                const originalPrice = parseFloat(
+                                    priceElement.getAttribute("data-original-price")
+                                );
+                                const convertedPrice = (originalPrice * rate).toFixed(2);
+                                priceElement.textContent = `${convertedPrice} ${targetCurrency}`;
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erreur de conversion:", error);
+                        // Solution de repli: afficher les prix dans la devise d'origine
+                    });
+            }
+
+            // Gestion des événements
+            countryToggle.addEventListener("click", (e) => {
+                e.stopPropagation();
+                dropdownCountry.style.display =
+                    dropdownCountry.style.display === "block" ? "none" : "block";
+                if (dropdownCountry.style.display === "block") {
+                    generateCountryList();
+                    countrySearch.focus();
+                }
+            });
+
+            closeCountryMenu.addEventListener("click", () => {
+                dropdownCountry.style.display = "none";
+            });
+
+            countrySearch.addEventListener("input", (e) => {
+                generateCountryList(e.target.value);
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest(".country-dropdown")) {
+                    dropdownCountry.style.display = "none";
+                }
+            });
+
+            // Initialisation
+            generateCountryList();
+        });
+    </script>
+
+    <script>
+        // Liste complète des pays (exemple partiel)
+        const countrie = [{
+                code: "FR",
+                name: "France",
+                currency: "EUR",
+                symbol: "€",
+                flag: "fr",
+            },
+            {
+                code: "DE",
+                name: "Allemagne",
+                currency: "EUR",
+                symbol: "€",
+                flag: "de",
+            },
+            {
+                code: "US",
+                name: "États-Unis",
+                currency: "USD",
+                symbol: "$",
+                flag: "us",
+            },
+            // ... autres pays ...
+        ];
+
+        // Dictionnaire de traduction
+        const translations = {
+            fr: {
+                search_placeholder: "Rechercher des meubles, décoration...",
+                select_country: "Sélectionnez votre pays",
+                search_country: "Rechercher un pays...",
+            },
+            en: {
+                search_placeholder: "Search for furniture, decor...",
+                select_country: "Select your country",
+                search_country: "Search for a country...",
+            },
+            es: {
+                search_placeholder: "Buscar muebles, decoración...",
+                select_country: "Selecciona tu país",
+                search_country: "Buscar un país...",
+            },
+        };
+
+        // Langue par défaut
+        let currentLanguage = "fr";
+
+        // Fonction pour changer la langue
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            document.querySelector(".language-code").textContent =
+                lang.toUpperCase();
+            document.getElementById("dropdownLanguage").style.display = "none";
+
+            // Mettre à jour les textes traduits
+            document.querySelectorAll(".translate").forEach((el) => {
+                const key = el.getAttribute("data-key");
+                el.textContent = translations[lang][key] || translations["fr"][key];
+            });
+
+            // Mettre à jour le placeholder de recherche
+            document.querySelector(".search-container input").placeholder =
+                translations[lang]["search_placeholder"];
+            document.getElementById("countrySearch").placeholder =
+                translations[lang]["search_country"];
+
+            // Sauvegarder la préférence
+            localStorage.setItem("preferredLanguage", lang);
+        }
+
+        // Initialisation
+        document.addEventListener("DOMContentLoaded", function() {
+            // Récupérer la langue sauvegardée ou détecter la langue du navigateur
+            const savedLanguage = localStorage.getItem("preferredLanguage");
+            const browserLanguage = navigator.language.slice(0, 2);
+
+            if (savedLanguage) {
+                changeLanguage(savedLanguage);
+            } else if (translations[browserLanguage]) {
+                changeLanguage(browserLanguage);
+            }
+
+            // Gestion des menus déroulants
+            const languageToggle = document.getElementById("languageToggle");
+            const dropdownLanguage = document.getElementById("dropdownLanguage");
+
+            languageToggle.addEventListener("click", (e) => {
+                e.stopPropagation();
+                dropdownLanguage.style.display =
+                    dropdownLanguage.style.display === "block" ? "none" : "block";
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest(".language-dropdown")) {
+                    dropdownLanguage.style.display = "none";
+                }
+            });
+
+            // ... (le reste de votre code existant pour les pays) ...
+        });
+
+        // ... (le reste de votre code JavaScript existant) ...
+    </script>
+
+
+    <script>
+        let lastScrollTop = 0;
+        const header = document.getElementById("mainHeader");
+
+        window.addEventListener("scroll", function() {
+            const scrollTop =
+                window.pageYOffset || document.documentElement.scrollTop;
+
+            if (scrollTop > lastScrollTop) {
+                // On descend → cacher le header
+                header.style.top = "-150px"; // adapte cette valeur à la hauteur de ton header
+            } else {
+                // On remonte → afficher le header
+                header.style.top = "0";
+            }
+
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // pour éviter valeurs négatives
+        });
+    </script>
+
+    <script>
+        // Gestion des dropdowns
+        function setupDropdown(toggleId, dropdownId) {
+            const toggle = document.getElementById(toggleId);
+            const dropdown = document.getElementById(dropdownId);
+
+            toggle.addEventListener("click", function(e) {
+                e.stopPropagation();
+                // Ferme tous les autres dropdowns
+                document.querySelectorAll(".dropdown-menu").forEach((d) => {
+                    if (d.id !== dropdownId) d.style.display = "none";
+                });
+                // Ouvre/ferme le dropdown actuel
+                dropdown.style.display =
+                    dropdown.style.display === "block" ? "none" : "block";
+            });
+        }
+
+        // Initialisation des dropdowns
+        setupDropdown("userToggle", "dropdownUser");
+        setupDropdown("helpToggle", "dropdownHelp");
+
+        // Ferme les dropdowns quand on clique ailleurs
+        document.addEventListener("click", function() {
+            document.querySelectorAll(".dropdown-menu").forEach((d) => {
+                d.style.display = "none";
+            });
+        });
+
+        // Animation du point de notification utilisateur
+        setInterval(() => {
+            const pulse = document.querySelector(".user-pulse");
+            if (Math.random() > 0.8) {
+                pulse.style.display = "block";
+                setTimeout(() => {
+                    pulse.style.display = "none";
+                }, 5000);
+            }
+        }, 30000);
+    </script>
+
+    <script>
+        // Script pour le menu déroulant
+        document
+            .querySelector(".help-dropdown button")
+            .addEventListener("click", function(e) {
+                e.stopPropagation();
+                const dropdown = document.querySelector(".dropdown-content");
+                dropdown.style.display =
+                    dropdown.style.display === "block" ? "none" : "block";
+            });
+
+        // Fermer le menu si on clique ailleurs
+        document.addEventListener("click", function() {
+            document.querySelector(".dropdown-content").style.display = "none";
+        });
+
+        // Empêcher la fermeture quand on clique dans le menu
+        document
+            .querySelector(".dropdown-content")
+            .addEventListener("click", function(e) {
+                e.stopPropagation();
+            });
+    </script>
+
+    <script>
+        // Script pour le menu déroulant
+        document
+            .querySelector(".help-dropdown button")
+            .addEventListener("click", function(e) {
+                e.stopPropagation();
+                const dropdown = document.querySelector(".dropdown-content");
+                dropdown.style.display =
+                    dropdown.style.display === "block" ? "none" : "block";
+            });
+
+        // Fermer le menu si on clique ailleurs
+        document.addEventListener("click", function() {
+            document.querySelector(".dropdown-content").style.display = "none";
+        });
+
+        // Empêcher la fermeture quand on clique dans le menu
+        document
+            .querySelector(".dropdown-content")
+            .addEventListener("click", function(e) {
+                e.stopPropagation();
+            });
+    </script>
+
+    <script>
+        // Chargement différé pour améliorer les performances
+        document.addEventListener("DOMContentLoaded", function() {
+            const iframe = document.querySelector(".youtube-container iframe");
+            iframe.setAttribute("src", iframe.getAttribute("src"));
+        });
+    </script>
+    <script>
         // Gestion des likes
         document.querySelectorAll(".like-btn").forEach((btn) => {
             btn.addEventListener("click", function() {
@@ -2260,7 +1884,8 @@
             img.addEventListener("click", function() {
                 // Liste des IDs des produits dans le même ordre qu'ils apparaissent sur la page
                 const productIds = ["1", "2", "3",
-                "4"]; // Correspond aux data-id des boutons "Ajouter au panier"
+                    "4"
+                ]; // Correspond aux data-id des boutons "Ajouter au panier"
 
                 // Récupérer l'ID du produit correspondant
                 const productId = productIds[index];
@@ -2329,6 +1954,83 @@
             document.getElementById("checkout-modal").style.display = "block";
         }
     </script>
+
+    <script>
+        // 🔄 Filtrage dynamique des commandes
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Retirer la classe active de tous les boutons
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                // Activer le bouton cliqué
+                button.classList.add('active');
+
+                const filter = button.getAttribute('data-filter');
+
+                document.querySelectorAll('.order-card').forEach(card => {
+                    const status = card.getAttribute('data-status');
+
+                    if (filter === 'all' || status === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.filter-btn');
+            const cards = document.querySelectorAll('.order-card');
+
+            // Message "aucun résultat" (créé une seule fois)
+            let emptyMsg = document.getElementById('orders-empty-filter');
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('p');
+                emptyMsg.id = 'orders-empty-filter';
+                emptyMsg.textContent = 'Aucune commande pour ce filtre.';
+                emptyMsg.style.cssText = 'text-align:center;color:#666;display:none;margin-top:10px;';
+                const list = document.querySelector('.orders-list');
+                list && list.appendChild(emptyMsg);
+            }
+
+            function applyFilter(filter) {
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    const status = (card.getAttribute('data-status') || '').toLowerCase();
+                    const show = (filter === 'all') || (status === filter);
+                    card.style.display = show ? '' : 'none';
+                    if (show) visibleCount++;
+                });
+
+                emptyMsg.style.display = visibleCount ? 'none' : '';
+            }
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // style actif
+                    buttons.forEach(b => {
+                        b.classList.remove('active');
+                        b.style.background = '#f1f1f1';
+                        b.style.color = '#000';
+                    });
+                    btn.classList.add('active');
+                    btn.style.background = '#1f4e5f';
+                    btn.style.color = '#fff';
+
+                    // filtre
+                    const filter = btn.getAttribute('data-filter');
+                    applyFilter(filter);
+                });
+            });
+
+            // état initial = “Toutes”
+            const active = document.querySelector('.filter-btn.active');
+            applyFilter(active ? active.getAttribute('data-filter') : 'all');
+        });
+    </script>
+
 
     <script src="js/app-auth.js" defer></script>
 

@@ -454,6 +454,39 @@
         }
 
 
+        /* Styles existants... */
+
+        /* Nouveaux styles pour la sélection de langue */
+        .language-dropdown .dropdown-menu div:hover {
+            background-color: #f8f8f8;
+        }
+
+        /* Styles responsives */
+        @media (max-width: 992px) {
+            .search-container {
+                order: 1;
+                flex: 1 1 100% !important;
+                max-width: 100% !important;
+                margin: 10px 0 !important;
+            }
+
+            .header-container {
+                flex-wrap: wrap !important;
+            }
+
+            .country-code,
+            .language-code {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-icons {
+                gap: 8px !important;
+            }
+        }
+
+
 
 
         .order-card {

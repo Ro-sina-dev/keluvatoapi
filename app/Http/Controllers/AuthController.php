@@ -50,28 +50,33 @@ class AuthController extends Controller
         return redirect()->route('home');
     }
 
-    public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
+        public function login(Request $request)
+        {
+            $credentials = $request->validate([
+                'email'    => ['required', 'email'],
+                'password' => ['required'],
+            ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+            if (Auth::attempt($credentials, $request->filled('remember'))) {
+                $request->session()->regenerate();
 
-            $user = Auth::user();
+                $user = Auth::user();
 
-            if ($user->role === 'admin') {
-                return redirect()->route('admin.dashboard'); // vers la vue admin
-            } elseif ($user->role === 'pro') {
-                return redirect()->route('profile'); // vers profil pro
-            } else {
-                return redirect()->route('home'); // utilisateur simple
+                if ($user->role === 'admin') {
+                    return redirect()->route('admin.dashboard');
+                }
+
+                if ($user->role === 'pro') {
+                    return redirect()->route('profile');
+                }
+
+                return redirect()->route('home');
             }
-        }
 
-        return back()->withErrors([
-            'email' => 'Les identifiants sont incorrects.',
-        ]);
-    }
+            return back()->withErrors([
+                'email' => 'Identifiants incorrects.',
+            ])->onlyInput('email');
+        }
 
 
 

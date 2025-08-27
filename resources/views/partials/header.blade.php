@@ -137,7 +137,7 @@
                 animation: fadeIn 0.15s ease-out;
               ">
                     <div style="padding: 8px 0; border-bottom: 1px solid #f5f5f5">
-                        @auth
+                @auth
                             <a href="{{ route('profile') }}"
                                 style="
                     display: flex;
@@ -208,8 +208,9 @@
                     </div>
                 </div>
             </div>
+
             @auth
-                <a class="desktop-only" href="{{ route('profile') }}" style="font-size: 14px;
+                <a class="" href="{{ route('profile') }}" style="font-size: 14px;
                     color: white;
                     background: rgba(255, 255, 255, 0.1);
                     padding: 8px 15px;
@@ -224,7 +225,8 @@
 
                 </a>
             @else
-                <a class="auth-link desktop-only" href="{{ route('login') }}"
+
+                <a class="auth-link " href="{{ route('login') }}"
                     style="
                     font-size: 14px;
                     color: white;
@@ -325,7 +327,7 @@
                                     <i class="fas fa-ban" style="margin-right: 12px; color: #4a6bff; width: 20px; text-align: center;"></i>
                                     <span>Annuler ma commande</span>
                                 </a>-->
-                        <a href="contactez-nous.html"
+                        <a href="#"
                             style="
                     display: flex;
                     align-items: center;
@@ -1048,9 +1050,9 @@
                 })();
             </script>
 
-            {{--  @auth
-               Si l’utilisateur est connecté, lien vers la page de checkout --}}
-            {{-- <a id="cart-link" href="{{ route('checkout') }}"
+           @auth
+                {{--  Si l’utilisateur est connecté, lien vers la page de checkout --}}
+             <a id="cart-link" href="{{ route('checkout') }}"
                     style="position: relative; color: white; text-decoration: none; padding: 6px;">
                     <i class="fas fa-shopping-cart" style="font-size: 20px;"></i>
                     <span class="cart-count"
@@ -1074,11 +1076,11 @@
                 </a>
             @else
                 {{-- Si l’utilisateur n’est pas connecté, rediriger vers login --}}
-            {{-- <a id="cart-link" href="{{ route('login') }}"
+            <a id="cart-link" href="{{ route('login') }}"
                     style="position: relative; color: white; text-decoration: none; padding: 6px;">
                     <i class="fas fa-shopping-cart" style="font-size: 20px;"></i>
                 </a>
-            @endauth  --}}
+            @endauth
 
 
 
@@ -1208,7 +1210,7 @@
                       border-radius: 10px;
                     "></span>
                         </a>
-                        <a href="commandes.html"
+                        <a href="{{ route('orders') }}"
                             style="
                     display: flex;
                     align-items: center;
@@ -1235,12 +1237,12 @@
                 <!-- Profil professionnel -->
                 <div style="margin-bottom: 25px">
                     @auth
-                        <a class="desktop-only" href="{{ route('profile') }}" style="...">
-                            <i class="fas fa-user" style="font-size: 14px"></i>
-                            <span>{{ Auth::user()->name }} — {{ Auth::user()->role }}</span>
+                        <a class="mobile-only" href="{{ route('profile') }}" style="...">
+                           <!--  <i class="fas fa-user" style="font-size: 14px"></i>
+                            <span>{{ Auth::user()->name }} — {{ Auth::user()->role }}</span> -->
                         </a>
                     @else
-                        <a class="auth-link desktop-only" href="{{ route('login') }}"
+                        <a class="auth-link mobile-only" href="{{ route('login') }}"
                             style="
                     font-size: 14px;
                     color: white;
