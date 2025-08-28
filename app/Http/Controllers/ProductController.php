@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Models\Favorite;
+use App\Models\Review;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -88,13 +91,47 @@ class ProductController extends Controller
 
 
 
+  public function show(Product $product)
+{
+    $related = \App\Models\Product::query()
+        ->where('is_active', true)
+        ->where('id', '!=', $product->id)
+        ->when($product->categories()->exists(), function ($q) use ($product) {
+            $catIds = $product->categories->pluck('id');
+            $q->whereHas('categories', fn($cq) => $cq->whereIn('categories.id', $catIds));
+        })
+        ->latest()->take(8)->get();
 
-    public function show(Product $product)
-    {
-        return $product;
+    // Charger avis + état favoris
+    $reviews = $product->reviews()->latest()->get();
+    $isFavorite = false;
+    if (Auth::check()) {
+        $isFavorite = Favorite::where('user_id', Auth::id())
+            ->where('product_id', $product->id)
+            ->exists();
     }
 
-    // app/Http/Controllers/ProductController.php
+    return view('products.detail', compact('product', 'related', 'reviews', 'isFavorite'));
+}
+
+
+public function toggleFavorite(Product $product)
+{
+    $fav = Favorite::where('user_id', Auth::id())
+                   ->where('product_id', $product->id);
+
+    if ($fav->exists()) {
+        $fav->delete();
+        return back()->with('success','Retiré des favoris ❌');
+    } else {
+        Favorite::create([
+            'user_id'    => Auth::id(),
+            'product_id' => $product->id,
+        ]);
+        return back()->with('success','Ajouté aux favoris ❤️');
+    }
+}
+
 
     public function store(\Illuminate\Http\Request $r)
     {
@@ -196,50 +233,67 @@ class ProductController extends Controller
         return $product->load('categories');
     }
 
+    // NEW: enregistrement d’un avis
+    public function storeReview(Request $r, Product $product)
+    {
+        $data = $r->validate([
+            'name'    => 'nullable|string|max:100',
+            'stars'   => 'required|integer|min:1|max:5',
+            'content' => 'required|string|min:5',
+        ]);
+
+        $data['product_id'] = $product->id;
+
+        Review::create($data);
+
+        return back()->with('success', 'Avis ajouté avec succès ✅');
+    }
+
+
 
 
     public function toggleLike(Request $request, Product $product)
-{
-// Like anonyme + anti-spam via session
-$likedKey = 'liked_products';
-$liked = collect(session()->get($likedKey, []));
+    {
+        // Like anonyme + anti-spam via session
+        $likedKey = 'liked_products';
+        $liked = collect(session()->get($likedKey, []));
 
 
-if ($liked->contains($product->id)) {
-// un-like
-if ($product->likes_count > 0) {
-$product->decrement('likes_count');
-}
-$liked = $liked->reject(fn($id) => (int)$id === (int)$product->id);
-} else {
-$product->increment('likes_count');
-$liked = $liked->push($product->id)->unique();
-}
+        if ($liked->contains($product->id)) {
+            // un-like
+            if ($product->likes_count > 0) {
+                $product->decrement('likes_count');
+            }
+            $liked = $liked->reject(fn($id) => (int)$id === (int)$product->id);
+        } else {
+            $product->increment('likes_count');
+            $liked = $liked->push($product->id)->unique();
+        }
 
 
-session()->put($likedKey, $liked->values()->all());
+        session()->put($likedKey, $liked->values()->all());
 
 
-return response()->json([
-'ok' => true,
-'likes' => $product->likes_count,
-'liked' => $liked->contains($product->id),
-]);
-}
+        return response()->json([
+            'ok' => true,
+            'likes' => $product->likes_count,
+            'liked' => $liked->contains($product->id),
+        ]);
+    }
 
 
-public function trackView(Request $request, Product $product)
-{
-// Compte une "vue" quand la carte est visible (IntersectionObserver)
-// Anti-refresh (1 vue / session / produit / 12h)
-$key = 'viewed_product_' . $product->id;
-$last = session()->get($key);
-if (!$last || now()->diffInHours($last) >= 12) {
-$product->increment('views_count');
-session()->put($key, now());
-}
-return response()->json(['ok' => true, 'views' => $product->views_count]);
-}
+    public function trackView(Request $request, Product $product)
+    {
+        // Compte une "vue" quand la carte est visible (IntersectionObserver)
+        // Anti-refresh (1 vue / session / produit / 12h)
+        $key = 'viewed_product_' . $product->id;
+        $last = session()->get($key);
+        if (!$last || now()->diffInHours($last) >= 12) {
+            $product->increment('views_count');
+            session()->put($key, now());
+        }
+        return response()->json(['ok' => true, 'views' => $product->views_count]);
+    }
 
 
     public function destroy(Product $product)

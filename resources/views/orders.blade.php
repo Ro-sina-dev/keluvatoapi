@@ -8,9 +8,10 @@
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 
+    <link rel="stylesheet" href="{{ asset('css/order.css') }}">
 
-
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 
 
@@ -691,86 +692,93 @@
         <div id="statusText">Initialisation de la caméra...</div>
     </div>
 
+
+    <script src="js/app-auth.js" defer></script>
+
+    <script src="js/main.js"></script>
+
+
     <script>
-        class ARMeasurementApp {
-            constructor() {
-                this.isActive = false;
-                this.measurementPoints = [];
-                this.measurements = [];
-                this.pixelsPerMM = 2;
-                this.videoStream = null;
+        (() => {
+            'use strict';
 
-                this.currentFacingMode = "environment"; // Commence par la caméra arrière
-                this.availableCameras = [];
+            /* ========== Helpers ========== */
+            const $ = (s, r = document) => r.querySelector(s);
+            const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-                this.initializeElements();
-                this.bindEvents();
-                this.detectAvailableCameras();
-            }
-
-            initializeElements() {
-                this.elements = {
-                    arBtn: document.getElementById("arMeasureBtn"),
-                    arContainer: document.getElementById("arContainer"),
-                    video: document.getElementById("videoStream"),
-                    overlay: document.getElementById("arOverlay"),
-                    statusIndicator: document.getElementById("statusIndicator"),
-                    statusText: document.getElementById("statusText"),
-                    pointCount: document.getElementById("pointCount"),
-                    lastMeasurement: document.getElementById("lastMeasurement"),
-                    addPointBtn: document.getElementById("addPointBtn"),
-                    clearBtn: document.getElementById("clearBtn"),
-                    sendBtn: document.getElementById("sendMeasurementsBtn"),
-                    closeBtn: document.getElementById("closeArBtn"),
-                    switchCameraBtn: document.getElementById("switchCameraBtn"),
-                    // Nouveaux éléments pour le modal
-                    permissionModal: document.getElementById("cameraPermissionModal"),
-                    allowCameraBtn: document.getElementById("allowCameraBtn"),
-                    denyCameraBtn: document.getElementById("denyCameraBtn"),
-                    closePermissionModal: document.getElementById(
-                        "closePermissionModal"
-                    ),
-                };
-            }
-
-            bindEvents() {
-                if (this.elements.arBtn) {
-                    this.elements.arBtn.addEventListener("click", () => this.startAR());
-                }
-                this.elements.closeBtn.addEventListener("click", () => this.stopAR());
-                this.elements.addPointBtn.addEventListener("click", () =>
-                    this.addMeasurementPoint()
-                );
-                this.elements.clearBtn.addEventListener("click", () =>
-                    this.clearMeasurements()
-                );
-                this.elements.sendBtn.addEventListener("click", () =>
-                    this.sendMeasurements()
-                );
-
-                this.elements.overlay.addEventListener("click", (e) => {
-                    if (this.isActive) {
-                        const rect = this.elements.overlay.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-                        this.addPointAtPosition(x, y);
-                    }
-                });
-            }
-
-            async startAR() {
+            /* ========== 0) Conversion devise utilitaire ========== */
+            async function convertPrices(targetCurrency) {
                 try {
-                    this.showStatus("Demande d'autorisation caméra...");
+                    const res = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const rate = data?.rates?.[targetCurrency];
+                    if (!rate) return;
+                    $$('.price[data-original-price]').forEach(el => {
+                        const base = parseFloat(el.getAttribute('data-original-price'));
+                        if (isNaN(base)) return;
+                        el.textContent = `${(base * rate).toFixed(2)} ${targetCurrency}`;
+                    });
+                } catch (e) {
+                    console.warn('Conversion devise indisponible', e);
+                }
+            }
 
-                    if (
-                        !navigator.mediaDevices ||
-                        !navigator.mediaDevices.getUserMedia
-                    ) {
-                        throw new Error("getUserMedia non supporté par ce navigateur");
-                    }
+            /* ========== 1) AR Measure (caméra) ========== */
+            class ARMeasurementApp {
+                constructor() {
+                    this.isActive = false;
+                    this.measurementPoints = [];
+                    this.measurements = [];
+                    this.pixelsPerMM = 2;
+                    this.videoStream = null;
 
-                    const stream = await navigator.mediaDevices
-                        .getUserMedia({
+                    this.initializeElements();
+                    this.bindEvents();
+                }
+
+                initializeElements() {
+                    this.elements = {
+                        arBtn: $("#arMeasureBtn"),
+                        arContainer: $("#arContainer"),
+                        video: $("#videoStream"),
+                        overlay: $("#arOverlay"),
+                        statusIndicator: $("#statusIndicator"),
+                        statusText: $("#statusText"),
+                        pointCount: $("#pointCount"),
+                        lastMeasurement: $("#lastMeasurement"),
+                        addPointBtn: $("#addPointBtn"),
+                        clearBtn: $("#clearBtn"),
+                        sendBtn: $("#sendMeasurementsBtn"),
+                        closeBtn: $("#closeArBtn"),
+                    };
+                }
+
+                bindEvents() {
+                    const E = this.elements;
+                    E.arBtn?.addEventListener('click', () => this.startAR());
+                    E.closeBtn?.addEventListener('click', () => this.stopAR());
+                    E.addPointBtn?.addEventListener('click', () => this.addMeasurementPoint());
+                    E.clearBtn?.addEventListener('click', () => this.clearMeasurements());
+                    E.sendBtn?.addEventListener('click', () => this.sendMeasurements());
+                    E.overlay?.addEventListener('click', (e) => {
+                        if (!this.isActive || !E.overlay) return;
+                        const rect = E.overlay.getBoundingClientRect();
+                        this.addPointAtPosition(e.clientX - rect.left, e.clientY - rect.top);
+                    });
+                }
+
+                async startAR() {
+                    const E = this.elements;
+                    if (!E.video || !E.arContainer) return;
+
+                    try {
+                        this.showStatus("Demande d'autorisation caméra...");
+                        if (!navigator.mediaDevices?.getUserMedia) {
+                            throw new Error("getUserMedia non supporté par ce navigateur");
+                        }
+
+                        const constraints = {
                             video: {
                                 facingMode: "environment",
                                 width: {
@@ -780,1261 +788,843 @@
                                 height: {
                                     ideal: 1080,
                                     min: 480
-                                },
-                            },
-                        })
-                        .catch(async (error) => {
-                            if (
-                                error.name === "OverconstrainedError" ||
-                                error.name === "NotFoundError"
-                            ) {
-                                return await navigator.mediaDevices.getUserMedia({
-                                    video: {
-                                        facingMode: "user",
-                                        width: {
-                                            ideal: 1280,
-                                            min: 640
-                                        },
-                                        height: {
-                                            ideal: 720,
-                                            min: 480
-                                        },
-                                    },
-                                });
+                                }
                             }
-                            throw error;
+                        };
+
+                        let stream;
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia(constraints);
+                        } catch (e) {
+                            // fallback caméra frontale
+                            stream = await navigator.mediaDevices.getUserMedia({
+                                video: {
+                                    facingMode: "user",
+                                    width: {
+                                        ideal: 1280,
+                                        min: 640
+                                    },
+                                    height: {
+                                        ideal: 720,
+                                        min: 480
+                                    }
+                                }
+                            });
+                        }
+
+                        this.videoStream = stream;
+                        E.video.srcObject = stream;
+
+                        await new Promise((resolve, reject) => {
+                            E.video.onloadedmetadata = resolve;
+                            E.video.onerror = reject;
+                            setTimeout(() => reject(new Error("Timeout")), 10000);
                         });
 
-                    this.videoStream = stream;
-                    this.elements.video.srcObject = stream;
+                        E.arContainer.classList.remove('hidden');
+                        this.hideStatus();
+                        this.isActive = true;
+                        this.calibrateScale();
+                    } catch (error) {
+                        console.error("Erreur caméra:", error);
+                        this.handleCameraError(error);
+                    }
+                }
 
-                    await new Promise((resolve, reject) => {
-                        this.elements.video.onloadedmetadata = resolve;
-                        this.elements.video.onerror = reject;
-                        setTimeout(() => reject(new Error("Timeout")), 10000);
-                    });
+                handleCameraError(error) {
+                    let message = "❌ Erreur caméra";
+                    if (error.name === "NotAllowedError") message = "🚫 Accès caméra refusé";
+                    if (error.name === "NotFoundError") message = "📷 Aucune caméra trouvée";
 
-                    this.elements.arContainer.classList.remove("hidden");
+                    const modal = document.createElement("div");
+                    modal.style.cssText = `
+        position:fixed; inset:0; background:rgba(0,0,0,.9);
+        display:flex; align-items:center; justify-content:center;
+        z-index:9999; padding:20px;`;
+                    modal.innerHTML = `
+        <div style="background:#fff;padding:30px;border-radius:20px;max-width:420px;text-align:center;color:#333">
+          <div style="font-size:60px;margin-bottom:12px">📷</div>
+          <h2 style="color:#ff4757;margin:0 0 10px">${message}</h2>
+          <p style="margin:0 0 15px">Autorisez l'accès à la caméra dans votre navigateur.</p>
+          <div style="background:#fff9c4;padding:12px;border-radius:8px;margin:15px 0">
+            <strong>⚠️ Important :</strong> Vos images ne sont pas enregistrées.
+          </div>
+          <div style="display:flex;gap:12px;justify-content:center">
+            <button onclick="window.location.reload()" style="padding:12px 18px;background:#4a6bff;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:600">🔄 Réessayer</button>
+            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding:12px 18px;background:#636e72;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:600">❌ Annuler</button>
+          </div>
+        </div>`;
+                    document.body.appendChild(modal);
                     this.hideStatus();
-                    this.isActive = true;
-                    this.calibrateScale();
-                } catch (error) {
-                    console.error("Erreur caméra:", error);
-                    this.handleCameraError(error);
-                }
-            }
-
-            handleCameraError(error) {
-                let message = "";
-                switch (error.name) {
-                    case "NotAllowedError":
-                        message = "🚫 Accès caméra refusé";
-                        break;
-                    case "NotFoundError":
-                        message = "📷 Aucune caméra trouvée";
-                        break;
-                    default:
-                        message = "❌ Erreur caméra";
-                }
-                this.showCameraPermissionDialog(message);
-            }
-
-            showCameraPermissionDialog(message) {
-                const modal = document.createElement("div");
-                modal.style.cssText = `
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(0,0,0,0.9); display: flex; align-items: center;
-                    justify-content: center; z-index: 9999; padding: 20px;
-                `;
-
-                const isChrome = /Chrome/.test(navigator.userAgent);
-                const isFirefox = /Firefox/.test(navigator.userAgent);
-                const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-                let instructions = "";
-                if (isChrome) {
-                    instructions =
-                        "Cliquez sur l'icône 📷 dans la barre d'adresse et autorisez la caméra";
-                } else if (isFirefox) {
-                    instructions = 'Cliquez sur "Autoriser" dans la popup de Firefox';
-                } else {
-                    instructions =
-                        "Autorisez l'accès à la caméra dans votre navigateur";
                 }
 
-                modal.innerHTML = `
-                    <div style="background: white; padding: 30px; border-radius: 20px; max-width: 400px; text-align: center; color: #333;">
-                        <div style="font-size: 60px; margin-bottom: 20px;">📷</div>
-                        <h2 style="color: #ff4757; margin-bottom: 15px;">${message}</h2>
-                        <p style="margin-bottom: 20px;">${instructions}</p>
-                        <div style="background: #fff9c4; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <strong>⚠️ Important :</strong><br>
-                            Vos images ne sont jamais enregistrées ni envoyées.
-                        </div>
-                        <div style="display: flex; gap: 15px; justify-content: center;">
-                            <button onclick="window.location.reload()" style="padding: 15px 25px; background: #4a6bff; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
-                                🔄 Réessayer
-                            </button>
-                            <button onclick="this.parentElement.parentElement.remove()" style="padding: 15px 25px; background: #636e72; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
-                                ❌ Annuler
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                document.body.appendChild(modal);
-                this.hideStatus();
-            }
-
-            stopAR() {
-                if (this.videoStream) {
-                    this.videoStream.getTracks().forEach((track) => track.stop());
-                    this.videoStream = null;
+                stopAR() {
+                    if (this.videoStream) {
+                        this.videoStream.getTracks().forEach(t => t.stop());
+                        this.videoStream = null;
+                    }
+                    this.elements.arContainer?.classList.add('hidden');
+                    this.isActive = false;
+                    this.clearMeasurements();
                 }
-                this.elements.arContainer.classList.add("hidden");
-                this.isActive = false;
-                this.clearMeasurements();
-            }
 
-            calibrateScale() {
-                const screenWidth = window.screen.width;
-                const videoWidth = this.elements.video.videoWidth;
-                this.pixelsPerMM = (videoWidth / screenWidth) * 0.5;
-            }
-
-            addPointAtPosition(x, y) {
-                const point = {
-                    id: Date.now(),
-                    x: x,
-                    y: y,
-                    timestamp: new Date()
-                };
-                this.measurementPoints.push(point);
-                this.renderPoint(point);
-
-                if (this.measurementPoints.length >= 2) {
-                    this.calculateAndRenderMeasurement();
+                calibrateScale() {
+                    const videoW = this.elements.video?.videoWidth || window.innerWidth;
+                    const screenW = window.screen.width || window.innerWidth;
+                    // approx simple, à affiner par calibration réelle :
+                    this.pixelsPerMM = (videoW / screenW) * 0.5;
                 }
-                this.updateUI();
-            }
 
-            addMeasurementPoint() {
-                const centerX = this.elements.overlay.offsetWidth / 2;
-                const centerY = this.elements.overlay.offsetHeight / 2;
-                this.addPointAtPosition(centerX, centerY);
-            }
+                addPointAtPosition(x, y) {
+                    if (!this.elements.overlay) return;
+                    const p = {
+                        id: Date.now(),
+                        x,
+                        y,
+                        timestamp: new Date()
+                    };
+                    this.measurementPoints.push(p);
+                    this.renderPoint(p);
+                    if (this.measurementPoints.length >= 2) {
+                        this.calculateAndRenderMeasurement();
+                    }
+                    this.updateUI();
+                }
 
-            renderPoint(point) {
-                const pointElement = document.createElement("div");
-                pointElement.className = "measurement-point";
-                pointElement.style.left = `${point.x}px`;
-                pointElement.style.top = `${point.y}px`;
-                this.elements.overlay.appendChild(pointElement);
-            }
+                addMeasurementPoint() {
+                    const o = this.elements.overlay;
+                    if (!o) return;
+                    this.addPointAtPosition(o.offsetWidth / 2, o.offsetHeight / 2);
+                }
 
-            calculateAndRenderMeasurement() {
-                const points = this.measurementPoints;
-                if (points.length < 2) return;
+                renderPoint(point) {
+                    const o = this.elements.overlay;
+                    if (!o) return;
+                    const dot = document.createElement('div');
+                    dot.className = 'measurement-point';
+                    dot.style.left = `${point.x}px`;
+                    dot.style.top = `${point.y}px`;
+                    o.appendChild(dot);
+                }
 
-                const [point1, point2] = points.slice(-2);
-                const pixelDistance = Math.sqrt(
-                    Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
-                );
-                const realDistance = pixelDistance / this.pixelsPerMM / 10;
+                calculateAndRenderMeasurement() {
+                    const pts = this.measurementPoints;
+                    if (pts.length < 2 || !this.elements.overlay) return;
 
-                const measurement = {
-                    id: Date.now(),
-                    point1,
-                    point2,
-                    pixelDistance,
-                    realDistance,
-                    timestamp: new Date(),
-                };
+                    const [a, b] = pts.slice(-2);
+                    const dx = b.x - a.x,
+                        dy = b.y - a.y;
+                    const pixelDistance = Math.hypot(dx, dy);
+                    const realDistance = pixelDistance / this.pixelsPerMM / 10; // en cm
 
-                this.measurements.push(measurement);
-                this.renderMeasurementLine(measurement);
-            }
+                    const measurement = {
+                        id: Date.now(),
+                        point1: a,
+                        point2: b,
+                        pixelDistance,
+                        realDistance,
+                        timestamp: new Date()
+                    };
+                    this.measurements.push(measurement);
+                    this.renderMeasurementLine(measurement);
+                }
 
-            renderMeasurementLine(measurement) {
-                const {
+                renderMeasurementLine({
                     point1,
                     point2,
                     realDistance
-                } = measurement;
+                }) {
+                    const o = this.elements.overlay;
+                    if (!o) return;
 
-                const line = document.createElement("div");
-                line.className = "measurement-line";
+                    const dx = point2.x - point1.x;
+                    const dy = point2.y - point1.y;
+                    const length = Math.hypot(dx, dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-                const length = Math.sqrt(
-                    Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
-                );
-                const angle =
-                    (Math.atan2(point2.y - point1.y, point2.x - point1.x) * 180) /
-                    Math.PI;
+                    const line = document.createElement('div');
+                    line.className = 'measurement-line';
+                    line.style.width = `${length}px`;
+                    line.style.left = `${point1.x}px`;
+                    line.style.top = `${point1.y}px`;
+                    line.style.transform = `rotate(${angle}deg)`;
+                    line.style.transformOrigin = '0 50%';
 
-                line.style.width = `${length}px`;
-                line.style.left = `${point1.x}px`;
-                line.style.top = `${point1.y}px`;
-                line.style.transform = `rotate(${angle}deg)`;
-                line.style.transformOrigin = "0 50%";
+                    const label = document.createElement('div');
+                    label.className = 'measurement-label';
+                    const display = realDistance >= 100 ? `${(realDistance/100).toFixed(2)} m` :
+                        `${realDistance.toFixed(1)} cm`;
+                    label.textContent = display;
+                    label.style.left = `${(point1.x + point2.x)/2}px`;
+                    label.style.top = `${(point1.y + point2.y)/2 - 30}px`;
 
-                const label = document.createElement("div");
-                label.className = "measurement-label";
-
-                let displayDistance =
-                    realDistance >= 100 ?
-                    `${(realDistance / 100).toFixed(2)} m` :
-                    `${realDistance.toFixed(1)} cm`;
-
-                label.textContent = displayDistance;
-                label.style.left = `${(point1.x + point2.x) / 2}px`;
-                label.style.top = `${(point1.y + point2.y) / 2 - 30}px`;
-
-                this.elements.overlay.appendChild(line);
-                this.elements.overlay.appendChild(label);
-                this.elements.lastMeasurement.textContent = displayDistance;
-            }
-
-            clearMeasurements() {
-                this.measurementPoints = [];
-                this.measurements = [];
-
-                const measurementElements = this.elements.overlay.querySelectorAll(
-                    ".measurement-point, .measurement-line, .measurement-label"
-                );
-                measurementElements.forEach((el) => el.remove());
-                this.updateUI();
-            }
-
-            updateUI() {
-                this.elements.pointCount.textContent = this.measurementPoints.length;
-                const totalMeasurementsEl =
-                    document.getElementById("totalMeasurements");
-                if (totalMeasurementsEl) {
-                    totalMeasurementsEl.textContent = this.measurements.length;
+                    o.appendChild(line);
+                    o.appendChild(label);
+                    this.elements.lastMeasurement && (this.elements.lastMeasurement.textContent = display);
                 }
 
-                const instructionEl = document.getElementById("instructionText");
-                if (instructionEl) {
-                    if (this.measurementPoints.length === 0) {
-                        instructionEl.innerHTML =
-                            "📍 Cliquez sur le <strong>premier coin</strong> à mesurer";
-                        instructionEl.style.color = "#4a6bff";
+                clearMeasurements() {
+                    this.measurementPoints = [];
+                    this.measurements = [];
+                    this.elements.overlay?.querySelectorAll(
+                            '.measurement-point,.measurement-line,.measurement-label')
+                        .forEach(el => el.remove());
+                    this.updateUI();
+                }
+
+                updateUI() {
+                    this.elements.pointCount && (this.elements.pointCount.textContent = this.measurementPoints
+                        .length);
+                    const totalEl = $('#totalMeasurements');
+                    totalEl && (totalEl.textContent = this.measurements.length);
+
+                    const instruction = $('#instructionText');
+                    if (!instruction) return;
+                    if (!this.measurementPoints.length) {
+                        instruction.innerHTML = "📍 Cliquez sur le <strong>premier coin</strong> à mesurer";
+                        instruction.style.color = "#4a6bff";
                     } else if (this.measurementPoints.length === 1) {
-                        instructionEl.innerHTML =
-                            "📍 Maintenant cliquez sur le <strong>second coin</strong>";
-                        instructionEl.style.color = "#ff4757";
+                        instruction.innerHTML = "📍 Maintenant cliquez sur le <strong>second coin</strong>";
+                        instruction.style.color = "#ff4757";
                     } else {
-                        instructionEl.innerHTML =
-                            "✅ Mesure terminée ! Vous pouvez en ajouter d'autres";
-                        instructionEl.style.color = "#2ed573";
+                        instruction.innerHTML = "✅ Mesure terminée ! Vous pouvez en ajouter d'autres";
+                        instruction.style.color = "#2ed573";
                     }
                 }
-            }
 
-            async sendMeasurements() {
-                if (this.measurements.length === 0) {
-                    alert("Aucune mesure à envoyer. Ajoutez au moins 2 points.");
-                    return;
+                async sendMeasurements() {
+                    if (!this.measurements.length) {
+                        alert("Aucune mesure à envoyer. Ajoutez au moins 2 points.");
+                        return;
+                    }
+                    this.showStatus("📤 Envoi des mesures...");
+
+                    const payload = {
+                        timestamp: new Date().toISOString(),
+                        measurements: this.measurements.map(m => ({
+                            realDistance: m.realDistance,
+                            pixelDistance: m.pixelDistance,
+                            timestamp: m.timestamp
+                        })),
+                        summary: {
+                            totalMeasurements: this.measurements.length,
+                            averageDistance: this.measurements.reduce((s, m) => s + m.realDistance, 0) / this
+                                .measurements.length
+                        }
+                    };
+
+                    try {
+                        console.log("📊 Données de mesure:", payload);
+                        // Exemple : await fetch('/api/measurements', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                        await new Promise(r => setTimeout(r, 1200));
+                        this.showStatus("✅ Mesures envoyées avec succès!");
+                        setTimeout(() => this.hideStatus(), 2000);
+                    } catch (e) {
+                        console.error(e);
+                        this.showStatus("❌ Erreur lors de l'envoi");
+                        setTimeout(() => this.hideStatus(), 3000);
+                    }
                 }
 
-                this.showStatus("📤 Envoi des mesures...");
+                showStatus(msg) {
+                    this.elements.statusText && (this.elements.statusText.textContent = msg);
+                    this.elements.statusIndicator?.classList.remove('hidden');
+                }
+                hideStatus() {
+                    this.elements.statusIndicator?.classList.add('hidden');
+                }
+            }
 
-                const data = {
-                    timestamp: new Date().toISOString(),
-                    measurements: this.measurements.map((m) => ({
-                        realDistance: m.realDistance,
-                        pixelDistance: m.pixelDistance,
-                        timestamp: m.timestamp,
-                    })),
-                    summary: {
-                        totalMeasurements: this.measurements.length,
-                        averageDistance: this.measurements.reduce((sum, m) => sum + m.realDistance, 0) /
-                            this.measurements.length,
-                    },
+            /* ========== 2) Animation & filtre commandes (une seule implémentation) ========== */
+            function initOrderUI() {
+                const cards = $$('.order-card');
+                const buttons = $$('.filter-btn');
+                if (cards.length) {
+                    cards.forEach((card, i) => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        card.style.transition = `all .5s ease ${i*0.1}s`;
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 100);
+                        card.addEventListener('click', (e) => {
+                            const t = e.target;
+                            if (t && (t.tagName === 'BUTTON' || t.tagName === 'A')) return;
+                            const title = card.querySelector('h3')?.textContent?.trim() || '(commande)';
+                            console.log('Voir détails :', title);
+                        });
+                    });
+                }
+
+                if (!buttons.length || !cards.length) return;
+
+                let emptyMsg = $('#orders-empty-filter');
+                if (!emptyMsg) {
+                    emptyMsg = document.createElement('p');
+                    emptyMsg.id = 'orders-empty-filter';
+                    emptyMsg.textContent = 'Aucune commande pour ce filtre.';
+                    emptyMsg.style.cssText = 'text-align:center;color:#666;display:none;margin-top:10px;';
+                    $('.orders-list')?.appendChild(emptyMsg);
+                }
+
+                const applyFilter = (filter) => {
+                    let visible = 0;
+                    cards.forEach(c => {
+                        const status = (c.getAttribute('data-status') || '').toLowerCase();
+                        const show = (filter === 'all') || (status === filter);
+                        c.style.display = show ? '' : 'none';
+                        if (show) visible++;
+                    });
+                    emptyMsg.style.display = visible ? 'none' : '';
                 };
 
-                try {
-                    console.log("📊 Données de mesure:", data);
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        buttons.forEach(b => {
+                            b.classList.remove('active');
+                            b.style.background = '#f1f1f1';
+                            b.style.color = '#000';
+                        });
+                        btn.classList.add('active');
+                        btn.style.background = '#1f4e5f';
+                        btn.style.color = '#fff';
+                        applyFilter(btn.getAttribute('data-filter') || 'all');
+                    });
+                });
 
-                    // REMPLACEZ PAR VOTRE API :
-                    // const response = await fetch('/api/measurements', {
-                    //     method: 'POST',
-                    //     headers: { 'Content-Type': 'application/json' },
-                    //     body: JSON.stringify(data)
-                    // });
+                const active = $('.filter-btn.active');
+                applyFilter(active ? active.getAttribute('data-filter') : 'all');
+            }
 
-                    await new Promise((resolve) => setTimeout(resolve, 1500));
+            /* ========== 3) Menus : mobile modal & dropdowns desktop (sans doublons) ========== */
+            function initMenus() {
+                // Mobile
+                const toggle = $('.mobile-menu-toggle');
+                const modal = $('#mobileMenuModal');
+                const close = $('#closeMobileMenu');
+                toggle?.addEventListener('click', () => {
+                    if (!modal) return;
+                    modal.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                });
+                close?.addEventListener('click', () => {
+                    if (!modal) return;
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                });
+                modal?.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                        document.body.style.overflow = 'auto';
+                    }
+                });
 
-                    this.showStatus("✅ Mesures envoyées avec succès!");
-                    setTimeout(() => this.hideStatus(), 2000);
-                } catch (error) {
-                    console.error("Erreur envoi:", error);
-                    this.showStatus("❌ Erreur lors de l'envoi");
-                    setTimeout(() => this.hideStatus(), 3000);
+                // Desktop dropdowns génériques
+                const toggles = $$('[id$="Toggle"]');
+                toggles.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const dropdownId = btn.id.replace(/Toggle$/, '');
+                        const dd = document.getElementById(dropdownId);
+                        if (!dd) return;
+                        $$('.dropdown-menu').forEach(m => {
+                            if (m !== dd) m.style.display = 'none';
+                        });
+                        dd.style.display = (dd.style.display === 'block') ? 'none' : 'block';
+                    });
+                });
+                document.addEventListener('click', () => $$('.dropdown-menu').forEach(m => m.style.display = 'none'));
+                $$('.dropdown-menu').forEach(m => m.addEventListener('click', e => e.stopPropagation()));
+
+                // Help dropdown (une seule fois)
+                const helpBtn = document.querySelector('.help-dropdown button');
+                const helpDD = document.querySelector('.help-dropdown .dropdown-content');
+                if (helpBtn && helpDD) {
+                    helpBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        helpDD.style.display = (helpDD.style.display === 'block') ? 'none' : 'block';
+                    });
+                    document.addEventListener('click', () => helpDD.style.display = 'none');
+                    helpDD.addEventListener('click', e => e.stopPropagation());
                 }
             }
 
-            showStatus(message) {
-                this.elements.statusText.textContent = message;
-                this.elements.statusIndicator.classList.remove("hidden");
+            /* ========== 4) Langue + Pays/Devise (une seule source) ========== */
+            const countries = [{
+                    code: 'FR',
+                    name: 'France',
+                    currency: 'EUR',
+                    symbol: '€',
+                    flag: 'fr'
+                },
+                {
+                    code: 'DE',
+                    name: 'Allemagne',
+                    currency: 'EUR',
+                    symbol: '€',
+                    flag: 'de'
+                },
+                {
+                    code: 'US',
+                    name: 'États-Unis',
+                    currency: 'USD',
+                    symbol: '$',
+                    flag: 'us'
+                },
+                {
+                    code: 'GB',
+                    name: 'Royaume-Uni',
+                    currency: 'GBP',
+                    symbol: '£',
+                    flag: 'gb'
+                },
+                {
+                    code: 'JP',
+                    name: 'Japon',
+                    currency: 'JPY',
+                    symbol: '¥',
+                    flag: 'jp'
+                },
+                {
+                    code: 'CA',
+                    name: 'Canada',
+                    currency: 'CAD',
+                    symbol: '$',
+                    flag: 'ca'
+                },
+                {
+                    code: 'AU',
+                    name: 'Australie',
+                    currency: 'AUD',
+                    symbol: '$',
+                    flag: 'au'
+                },
+                {
+                    code: 'CN',
+                    name: 'Chine',
+                    currency: 'CNY',
+                    symbol: '¥',
+                    flag: 'cn'
+                },
+                {
+                    code: 'BR',
+                    name: 'Brésil',
+                    currency: 'BRL',
+                    symbol: 'R$',
+                    flag: 'br'
+                },
+                {
+                    code: 'IN',
+                    name: 'Inde',
+                    currency: 'INR',
+                    symbol: '₹',
+                    flag: 'in'
+                },
+            ];
+            const translations = {
+                fr: {
+                    search_placeholder: "Rechercher des meubles, décoration...",
+                    select_country: "Sélectionnez votre pays",
+                    search_country: "Rechercher un pays..."
+                },
+                en: {
+                    search_placeholder: "Search for furniture, decor...",
+                    select_country: "Select your country",
+                    search_country: "Search for a country..."
+                },
+                es: {
+                    search_placeholder: "Buscar muebles, decoración...",
+                    select_country: "Selecciona tu país",
+                    search_country: "Buscar un país..."
+                },
+            };
+
+            function initLangCountry() {
+                // Langue
+                const langBtn = $('#languageToggle');
+                const langDD = $('#dropdownLanguage');
+                const searchInput = $('.search-container input');
+                const countrySearch = $('#countrySearch');
+
+                function applyLanguage(lang) {
+                    const dict = translations[lang] || translations.fr;
+                    $$('.translate').forEach(el => {
+                        const key = el.getAttribute('data-key');
+                        if (key && dict[key]) el.textContent = dict[key];
+                    });
+                    if (searchInput && dict.search_placeholder) searchInput.placeholder = dict.search_placeholder;
+                    if (countrySearch && dict.search_country) countrySearch.placeholder = dict.search_country;
+                    const codeEl = $('.language-code');
+                    if (codeEl) codeEl.textContent = (lang || 'fr').toUpperCase();
+                    localStorage.setItem('preferredLanguage', lang);
+                }
+                // Exposer la fonction si des appels inline existent
+                window.changeLanguage = (lang) => {
+                    applyLanguage(lang);
+                    langDD && (langDD.style.display = 'none');
+                };
+
+                langBtn?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!langDD) return;
+                    langDD.style.display = (langDD.style.display === 'block') ? 'none' : 'block';
+                });
+                document.addEventListener('click', () => langDD && (langDD.style.display = 'none'));
+                langDD?.addEventListener('click', e => e.stopPropagation());
+
+                const saved = localStorage.getItem('preferredLanguage');
+                const browser = (navigator.language || 'fr').slice(0, 2);
+                applyLanguage(saved || (translations[browser] ? browser : 'fr'));
+
+                // Pays/Devise
+                const countryToggle = $('#countryToggle');
+                const dropdownCountry = $('#dropdownCountry');
+                const countryList = $('#countryList');
+                const closeCountryMenu = $('#closeCountryMenu');
+
+                function generateCountryList(filter = '') {
+                    if (!countryList) return;
+                    countryList.innerHTML = '';
+                    const set = filter ? countries.filter(c => c.name.toLowerCase().includes(filter.toLowerCase())) :
+                        countries;
+                    set.forEach(c => {
+                        const el = document.createElement('div');
+                        el.className = 'country-option';
+                        el.style.cssText =
+                            'display:flex;align-items:center;padding:10px 15px;cursor:pointer;border-bottom:1px solid #f5f5f5;';
+                        el.innerHTML = `
+          <span style="width:25px;height:18px;background-image:url('https://flagcdn.com/w20/${c.flag}.png');background-size:cover;margin-right:10px;"></span>
+          <span style="flex:1;font-size:14px;">${c.name}</span>
+          <span style="color:#666;font-size:13px;">${c.symbol} ${c.currency}</span>`;
+                        el.addEventListener('click', () => selectCountry(c));
+                        countryList.appendChild(el);
+                    });
+                }
+
+                function selectCountry(c) {
+                    const flagEl = $('.country-flag');
+                    const codeEl = $('.country-code');
+                    if (flagEl) flagEl.style.backgroundImage = `url('https://flagcdn.com/w20/${c.flag}.png')`;
+                    if (codeEl) codeEl.textContent = c.code;
+                    dropdownCountry && (dropdownCountry.style.display = 'none');
+                    convertPrices(c.currency);
+                    console.log(`Pays: ${c.name} / Devise: ${c.currency}`);
+                }
+
+                countryToggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!dropdownCountry) return;
+                    dropdownCountry.style.display = (dropdownCountry.style.display === 'block') ? 'none' :
+                        'block';
+                    if (dropdownCountry.style.display === 'block') {
+                        generateCountryList();
+                        countrySearch?.focus();
+                    }
+                });
+                closeCountryMenu?.addEventListener('click', () => dropdownCountry && (dropdownCountry.style.display =
+                    'none'));
+                countrySearch?.addEventListener('input', (e) => generateCountryList(e.target.value));
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.country-dropdown') && dropdownCountry) dropdownCountry.style
+                        .display = 'none';
+                });
             }
 
-            hideStatus() {
-                this.elements.statusIndicator.classList.add("hidden");
+            /* ========== 5) Header auto-hide ========== */
+            function initHeaderAutoHide() {
+                const header = $('#mainHeader');
+                if (!header) return;
+                let last = 0;
+                window.addEventListener('scroll', () => {
+                    const y = window.pageYOffset || document.documentElement.scrollTop;
+                    header.style.top = (y > last) ? '-150px' : '0';
+                    last = y <= 0 ? 0 : y;
+                });
             }
-        }
 
-        // Initialisation quand le DOM est prêt
-        document.addEventListener("DOMContentLoaded", () => {
-            new ARMeasurementApp();
-        });
+            /* ========== 6) Lazy YouTube ========== */
+            function initYouTubeLazy() {
+                const iframe = $('.youtube-container iframe');
+                if (!iframe) return;
+                iframe.setAttribute('src', iframe.getAttribute('src') || '');
+            }
+
+            /* ========== 7) Likes (UI locale) ========== */
+            function initLikes() {
+                $$('.like-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        this.classList.toggle('liked');
+                        const icon = this.querySelector('i');
+                        if (!icon) return;
+                        if (this.classList.contains('liked')) {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas');
+                        } else {
+                            icon.classList.remove('fas');
+                            icon.classList.add('far');
+                        }
+                    });
+                });
+            }
+
+            /* ========== 8) Panier & Checkout (UI locale) ========== */
+            function initCartAndCheckout() {
+                const cartIcon = $('#cart-icon');
+                const cartCount = cartIcon?.querySelector('.cart-count');
+                const checkoutModal = $('#checkout-modal');
+                const closeModal = $('.close-modal');
+                const cartItemsContainer = $('#cart-items');
+                const subtotalElement = $('#subtotal');
+                const totalElement = $('#total');
+
+                let cart = [];
+
+                const updateCartCount = () => {
+                    if (!cartCount) return;
+                    const items = cart.reduce((t, it) => t + it.quantity, 0);
+                    cartCount.textContent = items;
+                };
+                const updateCartDisplay = () => {
+                    if (!cartItemsContainer || !subtotalElement || !totalElement) return;
+                    cartItemsContainer.innerHTML = '';
+                    if (!cart.length) {
+                        cartItemsContainer.innerHTML = '<p>Votre panier est vide.</p>';
+                        subtotalElement.textContent = '€0.00';
+                        totalElement.textContent = '€0.00';
+                        return;
+                    }
+                    let subtotal = 0;
+                    cart.forEach(it => {
+                        const itemTotal = it.price * it.quantity;
+                        subtotal += itemTotal;
+                        const row = document.createElement('div');
+                        row.className = 'summary-item';
+                        row.innerHTML =
+                            `<span>${it.name} x${it.quantity}</span><span>€${itemTotal.toFixed(2)}</span>`;
+                        cartItemsContainer.appendChild(row);
+                    });
+                    subtotalElement.textContent = `€${subtotal.toFixed(2)}`;
+                    totalElement.textContent = `€${subtotal.toFixed(2)}`;
+                };
+
+                cartIcon?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    updateCartDisplay();
+                    if (checkoutModal) checkoutModal.style.display = 'block';
+                });
+                closeModal?.addEventListener('click', () => {
+                    if (checkoutModal) checkoutModal.style.display = 'none';
+                });
+
+                $$('.btn-add-to-cart').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        const name = this.getAttribute('data-name') || 'Article';
+                        const price = parseFloat(this.getAttribute('data-price') || '0');
+                        const found = cart.find(it => it.id === id);
+                        if (found) found.quantity += 1;
+                        else cart.push({
+                            id,
+                            name,
+                            price,
+                            quantity: 1
+                        });
+                        updateCartCount();
+                        alert(`${name} a été ajouté à votre panier !`);
+                    });
+                });
+
+                // Coupon
+                $('#apply-coupon')?.addEventListener('click', () => {
+                    const input = $('#coupon');
+                    if (!input || !subtotalElement || !totalElement) return;
+                    const code = (input.value || '').trim().toUpperCase();
+                    if (code !== 'KELU15') {
+                        alert('Code promo invalide');
+                        return;
+                    }
+
+                    const subtotal = parseFloat((subtotalElement.textContent || '0').replace('€', '')) || 0;
+                    const discount = subtotal * 0.15;
+                    const total = subtotal - discount;
+
+                    let discountEl = $('#discount-element');
+                    if (!discountEl) {
+                        discountEl = document.createElement('div');
+                        discountEl.id = 'discount-element';
+                        discountEl.className = 'summary-item';
+                        $('#cart-items')?.appendChild(discountEl);
+                    }
+                    discountEl.innerHTML = `<span>Réduction (15%)</span><span>-€${discount.toFixed(2)}</span>`;
+                    totalElement.textContent = `€${total.toFixed(2)}`;
+                    alert('Code promo appliqué avec succès !');
+                });
+
+                // Étapes checkout
+                $('#proceed-to-delivery')?.addEventListener('click', () => {
+                    $('#checkout-modal') && ($('#checkout-modal').style.display = 'none');
+                    $('#delivery-modal') && ($('#delivery-modal').style.display = 'block');
+                });
+                $('#proceed-to-payment')?.addEventListener('click', () => {
+                    $('#delivery-modal') && ($('#delivery-modal').style.display = 'none');
+                    $('#payment-modal') && ($('#payment-modal').style.display = 'block');
+                });
+                $('#confirm-order')?.addEventListener('click', () => {
+                    $('#payment-modal') && ($('#payment-modal').style.display = 'none');
+                    $('#confirmation-modal') && ($('#confirmation-modal').style.display = 'block');
+                });
+                $('#back-to-cart')?.addEventListener('click', () => {
+                    $('#delivery-modal') && ($('#delivery-modal').style.display = 'none');
+                    $('#checkout-modal') && ($('#checkout-modal').style.display = 'block');
+                });
+                $('#back-to-delivery')?.addEventListener('click', () => {
+                    $('#payment-modal') && ($('#payment-modal').style.display = 'none');
+                    $('#delivery-modal') && ($('#delivery-modal').style.display = 'block');
+                });
+                $('#return-to-shop')?.addEventListener('click', () => {
+                    window.location.href = '/';
+                });
+
+                // Expose pour ouvrir le panier ailleurs
+                window.openCartModal = () => {
+                    $('#checkout-modal') && ($('#checkout-modal').style.display = 'block');
+                };
+            }
+
+            /* ========== 9) Init global unique (un seul DOMContentLoaded) ========== */
+            document.addEventListener('DOMContentLoaded', () => {
+                // AR (instancié seulement si le bouton est présent)
+                if (document.getElementById('arMeasureBtn')) new ARMeasurementApp();
+
+                initOrderUI();
+                initMenus();
+                initLangCountry();
+                initHeaderAutoHide();
+                initYouTubeLazy();
+                initLikes();
+                initCartAndCheckout();
+            });
+
+        })();
     </script>
 
     <!-- Footer -->
-    <footer>
+    <!-- Bande d'avantages e-commerce -->
+    <section class="kv-usp">
+        <div class="container kv-usp-wrap">
+            <div class="usp"><i class="fas fa-shipping-fast"></i><span>Livraison rapide</span></div>
+            <div class="usp"><i class="fas fa-undo-alt"></i><span>Retours faciles 30j</span></div>
+            <div class="usp"><i class="fas fa-lock"></i><span>Paiement 100% sécurisé</span></div>
+            <div class="usp"><i class="fas fa-headset"></i><span>Support 7j/7</span></div>
+        </div>
+    </section>
+
+    <footer class="kv-footer">
+        <!-- bulles d'arrière-plan -->
+        <div class="kv-orbs" aria-hidden="true">
+            <span class="orb"></span><span class="orb"></span><span class="orb"></span>
+            <span class="orb"></span><span class="orb"></span><span class="orb"></span>
+        </div>
+
         <div class="container">
+            <!-- Newsletter -->
+            <div class="kv-newsletter">
+                <h3>Inscrivez-vous à notre newsletter</h3>
+                <p>Des promos, des nouveautés et des conseils déco – directement dans votre boîte mail.</p>
+                <form action="" method="POST" class="kv-news-form">
+                    @csrf
+                    <input type="email" name="email" placeholder="Votre e-mail" required>
+                    <button type="submit" class="btn-news">S’abonner</button>
+                </form>
+                <small>En vous inscrivant, vous acceptez notre <a href="">Politique de
+                        confidentialité</a>.</small>
+            </div>
+
+            <!-- Colonnes -->
             <div class="footer-container">
                 <div class="footer-col">
                     <h3>Keluvato Group</h3>
-                    <p>
-                        Vente à distance d'articles meubles, décoration d'intérieur et
-                        extérieur, produits de bricolage et construction.
-                    </p>
+                    <p>Votre boutique en ligne pour meubles, déco et bricolage. Sélection soignée, prix justes, service
+                        aux petits soins.</p>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-pinterest"></i></a>
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="X"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a>
+                    </div>
+
+                    <!-- Confiance / Paiements -->
+                    <div class="kv-trust">
+                        <div class="badges">
+                            <span class="badge"><i class="fas fa-shield-alt"></i> Acheteur protégé</span>
+                            <span class="badge"><i class="fas fa-certificate"></i> Satisfait ou remboursé</span>
+                        </div>
+                        <div class="payments" title="Moyens de paiement">
+                            <i class="fab fa-cc-visa"></i>
+                            <i class="fab fa-cc-mastercard"></i>
+                            <i class="fab fa-cc-paypal"></i>
+                            <i class="fas fa-mobile-alt" title="Mobile Money"></i>
+                        </div>
                     </div>
                 </div>
 
                 <div class="footer-col">
                     <h3>Boutique</h3>
                     <ul>
-                        <li><a href="#">Meubles</a></li>
-                        <li><a href="#">Décoration</a></li>
-                        <li><a href="#">Bricolage</a></li>
-                        <li><a href="#">Construction</a></li>
-                        <li><a href="#">Promotions</a></li>
+                        <li><a href="">Meubles</a></li>
+                        <li><a href="">Décoration</a></li>
+                        <li><a href="">Bricolage</a></li>
+                        <li><a href="">Construction</a></li>
+                        <li><a href="">Promotions</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
-                    <h3>Aide</h3>
+                    <h3>Aide & SAV</h3>
                     <ul>
-                        <li><a href="#">Contact</a></li>
-                        <li><a href="#">FAQ</a></li>
-                        <li><a href="#">Livraison</a></li>
-                        <li><a href="#">Retours</a></li>
-                        <li><a href="#">Guide des tailles</a></li>
+                        <li><a href="">Contact</a></li>
+                        <li><a href="">FAQ</a></li>
+                        <li><a href="">Livraison</a></li>
+                        <li><a href="">Retours & remboursements</a></li>
+                        <li><a href="">Guide des tailles</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
                     <h3>Informations</h3>
                     <ul>
-                        <li><a href="#">À propos</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">CGV</a></li>
-                        <li><a href="#">Politique de confidentialité</a></li>
-                        <li><a href="#">Mentions légales</a></li>
+                        <li><a href="">À propos</a></li>
+                        <li><a href="">Blog</a></li>
+                        <li><a href="">CGV</a></li>
+                        <li><a href="">Confidentialité</a></li>
+                        <li><a href="">Mentions légales</a></li>
                     </ul>
+
+                    <!-- App & préférences -->
+                    <div class="kv-apps">
+                        <a href="#" class="store">App Store</a>
+                        <a href="#" class="store">Google Play</a>
+                    </div>
+                    <div class="kv-prefs">
+                        <select aria-label="Devise">
+                            <option value="XOF">XOF – CFA</option>
+                            <option value="EUR">EUR – €</option>
+                        </select>
+                        <select aria-label="Langue">
+                            <option>Français</option>
+                            <option>English</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <div class="copyright">
-                <p>&copy; 2023 Keluvato Group. Tous droits réservés.</p>
+                <p>&copy; {{ date('Y') }} Keluvato Group — Tous droits réservés.</p>
             </div>
         </div>
     </footer>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Animation au chargement
-            const cards = document.querySelectorAll(".order-card");
-            cards.forEach((card, index) => {
-                card.style.opacity = "0";
-                card.style.transform = "translateY(20px)";
-                card.style.transition = "all 0.5s ease " + index * 0.1 + "s";
-
-                setTimeout(() => {
-                    card.style.opacity = "1";
-                    card.style.transform = "translateY(0)";
-                }, 100);
-            });
-
-            // Filtrage des commandes
-            const filterButtons = document.querySelectorAll(".filter-btn");
-            const orderCards = document.querySelectorAll(".order-card");
-
-            filterButtons.forEach((button) => {
-                button.addEventListener("click", function() {
-                    // Mise à jour de l'apparence des boutons
-                    filterButtons.forEach((btn) => {
-                        btn.style.background = "#f1f1f1";
-                        btn.style.color = "#333";
-                        btn.classList.remove("active");
-                    });
-
-                    this.style.background = "#1F4E5F";
-                    this.style.color = "white";
-                    this.classList.add("active");
-
-                    // Récupération du filtre sélectionné
-                    const filter = this.getAttribute("data-filter");
-
-                    // Filtrage des cartes de commande
-                    orderCards.forEach((card) => {
-                        if (filter === "all") {
-                            card.style.display = "block";
-                        } else {
-                            if (card.getAttribute("data-status") === filter) {
-                                card.style.display = "block";
-                            } else {
-                                card.style.display = "none";
-                            }
-                        }
-
-                        // Réappliquer l'animation
-                        card.style.opacity = "0";
-                        card.style.transform = "translateY(20px)";
-                        setTimeout(() => {
-                            card.style.opacity = "1";
-                            card.style.transform = "translateY(0)";
-                        }, 100);
-                    });
-                });
-            });
-
-            // Affichage des détails au clic sur une carte
-            orderCards.forEach((card) => {
-                card.addEventListener("click", function() {
-                    // Ne rien faire si on clique sur un bouton ou un lien
-                    if (
-                        event.target.tagName === "BUTTON" ||
-                        event.target.tagName === "A"
-                    ) {
-                        return;
-                    }
-
-                    // Ici vous pourriez rediriger vers une page de détails
-                    // ou afficher un modal avec plus d'informations
-                    console.log(
-                        "Voir les détails de la commande:",
-                        this.querySelector("h3").textContent
-                    );
-                });
-            });
-        });
-    </script>
-    <script>
-        // Script pour gérer l'affichage mobile
-        document.addEventListener("DOMContentLoaded", function() {
-            // Gestion du menu burger
-            const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
-            const mobileMenuModal = document.getElementById("mobileMenuModal");
-            const closeMobileMenu = document.getElementById("closeMobileMenu");
-
-            if (mobileMenuToggle && mobileMenuModal) {
-                mobileMenuToggle.addEventListener("click", function() {
-                    mobileMenuModal.style.display = "block";
-                    document.body.style.overflow = "hidden";
-                });
-            }
-
-            if (closeMobileMenu && mobileMenuModal) {
-                closeMobileMenu.addEventListener("click", function() {
-                    mobileMenuModal.style.display = "none";
-                    document.body.style.overflow = "auto";
-                });
-            }
-
-            // Fermer le modal si on clique en dehors
-            mobileMenuModal.addEventListener("click", function(e) {
-                if (e.target === mobileMenuModal) {
-                    mobileMenuModal.style.display = "none";
-                    document.body.style.overflow = "auto";
-                }
-            });
-
-            // Gestion des menus déroulants desktop
-            const toggleButtons = document.querySelectorAll('[id$="Toggle"]');
-            toggleButtons.forEach((button) => {
-                button.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                    const dropdownId = this.id.replace("Toggle", "");
-                    const dropdown = document.getElementById(dropdownId);
-                    const isVisible = dropdown.style.display === "block";
-
-                    // Fermer tous les autres menus
-                    document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                        if (menu.id !== dropdownId) {
-                            menu.style.display = "none";
-                        }
-                    });
-
-                    // Basculer l'affichage du menu courant
-                    dropdown.style.display = isVisible ? "none" : "block";
-                });
-            });
-
-            // Fermer les menus déroulants quand on clique ailleurs
-            document.addEventListener("click", function() {
-                document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                    menu.style.display = "none";
-                });
-            });
-
-            // Empêcher la fermeture quand on clique dans le menu
-            document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                menu.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                });
-            });
-
-            // Fonction pour changer la langue
-            window.changeLanguage = function(lang) {
-                console.log("Changement de langue vers:", lang);
-                // Ici vous ajouteriez la logique pour changer la langue
-                document.querySelectorAll(".language-code").forEach((el) => {
-                    el.textContent = lang.toUpperCase();
-                });
-                document.getElementById("mobileMenuModal").style.display = "none";
-                document.body.style.overflow = "auto";
-            };
-        });
-    </script>
-
-    <script>
-        // Liste complète des pays avec leurs devises (exemple partiel)
-        const countries = [{
-                code: "FR",
-                name: "France",
-                currency: "EUR",
-                symbol: "€",
-                flag: "fr",
-            },
-            {
-                code: "DE",
-                name: "Allemagne",
-                currency: "EUR",
-                symbol: "€",
-                flag: "de",
-            },
-            {
-                code: "US",
-                name: "États-Unis",
-                currency: "USD",
-                symbol: "$",
-                flag: "us",
-            },
-            {
-                code: "GB",
-                name: "Royaume-Uni",
-                currency: "GBP",
-                symbol: "£",
-                flag: "gb",
-            },
-            {
-                code: "JP",
-                name: "Japon",
-                currency: "JPY",
-                symbol: "¥",
-                flag: "jp"
-            },
-            {
-                code: "CA",
-                name: "Canada",
-                currency: "CAD",
-                symbol: "$",
-                flag: "ca",
-            },
-            {
-                code: "AU",
-                name: "Australie",
-                currency: "AUD",
-                symbol: "$",
-                flag: "au",
-            },
-            {
-                code: "CN",
-                name: "Chine",
-                currency: "CNY",
-                symbol: "¥",
-                flag: "cn"
-            },
-            {
-                code: "BR",
-                name: "Brésil",
-                currency: "BRL",
-                symbol: "R$",
-                flag: "br",
-            },
-            {
-                code: "IN",
-                name: "Inde",
-                currency: "INR",
-                symbol: "₹",
-                flag: "in"
-            },
-            // Ajoutez ici tous les autres pays nécessaires
-        ];
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const countryToggle = document.getElementById("countryToggle");
-            const dropdownCountry = document.getElementById("dropdownCountry");
-            const countryList = document.getElementById("countryList");
-            const countrySearch = document.getElementById("countrySearch");
-            const closeCountryMenu = document.getElementById("closeCountryMenu");
-
-            // Générer la liste des pays
-            function generateCountryList(filter = "") {
-                countryList.innerHTML = "";
-                const filtered = filter ?
-                    countries.filter((c) =>
-                        c.name.toLowerCase().includes(filter.toLowerCase())
-                    ) :
-                    countries;
-
-                filtered.forEach((country) => {
-                    const countryElement = document.createElement("div");
-                    countryElement.className = "country-option";
-                    countryElement.style.display = "flex";
-                    countryElement.style.alignItems = "center";
-                    countryElement.style.padding = "10px 15px";
-                    countryElement.style.cursor = "pointer";
-                    countryElement.style.borderBottom = "1px solid #f5f5f5";
-                    countryElement.setAttribute("data-country", country.code);
-                    countryElement.setAttribute("data-currency", country.currency);
-
-                    countryElement.innerHTML = `
-                <span style="width: 25px; height: 18px; background-image: url('https://flagcdn.com/w20/${country.flag}.png'); background-size: cover; margin-right: 10px;"></span>
-                <span style="flex: 1; font-size: 14px;">${country.name}</span>
-                <span style="color: #666; font-size: 13px;">${country.symbol} ${country.currency}</span>
-            `;
-
-                    countryElement.addEventListener("click", () =>
-                        selectCountry(country)
-                    );
-                    countryList.appendChild(countryElement);
-                });
-            }
-
-            // Sélectionner un pays
-            function selectCountry(country) {
-                document.querySelector(
-                    ".country-flag"
-                ).style.backgroundImage = `url('https://flagcdn.com/w20/${country.flag}.png')`;
-                document.querySelector(".country-code").textContent = country.code;
-                dropdownCountry.style.display = "none";
-
-                // Ici vous pouvez implémenter la conversion
-                convertPrices(country.currency);
-                console.log(
-                    `Pays sélectionné: ${country.name}, Devise: ${country.currency}`
-                );
-            }
-
-            // Fonction de conversion (exemple)
-            function convertPrices(targetCurrency) {
-                // 1. Récupérer le taux de change depuis une API (ex: https://exchangerate-api.com)
-                // 2. Convertir tous les prix sur la page
-                // Exemple simplifié:
-                fetch(`https://api.exchangerate-api.com/v4/latest/EUR`)
-                    .then((response) => response.json())
-                    .then((data) => {
-                        const rate = data.rates[targetCurrency];
-                        if (rate) {
-                            document.querySelectorAll(".price").forEach((priceElement) => {
-                                const originalPrice = parseFloat(
-                                    priceElement.getAttribute("data-original-price")
-                                );
-                                const convertedPrice = (originalPrice * rate).toFixed(2);
-                                priceElement.textContent = `${convertedPrice} ${targetCurrency}`;
-                            });
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Erreur de conversion:", error);
-                        // Solution de repli: afficher les prix dans la devise d'origine
-                    });
-            }
-
-            // Gestion des événements
-            countryToggle.addEventListener("click", (e) => {
-                e.stopPropagation();
-                dropdownCountry.style.display =
-                    dropdownCountry.style.display === "block" ? "none" : "block";
-                if (dropdownCountry.style.display === "block") {
-                    generateCountryList();
-                    countrySearch.focus();
-                }
-            });
-
-            closeCountryMenu.addEventListener("click", () => {
-                dropdownCountry.style.display = "none";
-            });
-
-            countrySearch.addEventListener("input", (e) => {
-                generateCountryList(e.target.value);
-            });
-
-            document.addEventListener("click", (e) => {
-                if (!e.target.closest(".country-dropdown")) {
-                    dropdownCountry.style.display = "none";
-                }
-            });
-
-            // Initialisation
-            generateCountryList();
-        });
-    </script>
-
-    <script>
-        // Liste complète des pays (exemple partiel)
-        const countrie = [{
-                code: "FR",
-                name: "France",
-                currency: "EUR",
-                symbol: "€",
-                flag: "fr",
-            },
-            {
-                code: "DE",
-                name: "Allemagne",
-                currency: "EUR",
-                symbol: "€",
-                flag: "de",
-            },
-            {
-                code: "US",
-                name: "États-Unis",
-                currency: "USD",
-                symbol: "$",
-                flag: "us",
-            },
-            // ... autres pays ...
-        ];
-
-        // Dictionnaire de traduction
-        const translations = {
-            fr: {
-                search_placeholder: "Rechercher des meubles, décoration...",
-                select_country: "Sélectionnez votre pays",
-                search_country: "Rechercher un pays...",
-            },
-            en: {
-                search_placeholder: "Search for furniture, decor...",
-                select_country: "Select your country",
-                search_country: "Search for a country...",
-            },
-            es: {
-                search_placeholder: "Buscar muebles, decoración...",
-                select_country: "Selecciona tu país",
-                search_country: "Buscar un país...",
-            },
-        };
-
-        // Langue par défaut
-        let currentLanguage = "fr";
-
-        // Fonction pour changer la langue
-        function changeLanguage(lang) {
-            currentLanguage = lang;
-            document.querySelector(".language-code").textContent =
-                lang.toUpperCase();
-            document.getElementById("dropdownLanguage").style.display = "none";
-
-            // Mettre à jour les textes traduits
-            document.querySelectorAll(".translate").forEach((el) => {
-                const key = el.getAttribute("data-key");
-                el.textContent = translations[lang][key] || translations["fr"][key];
-            });
-
-            // Mettre à jour le placeholder de recherche
-            document.querySelector(".search-container input").placeholder =
-                translations[lang]["search_placeholder"];
-            document.getElementById("countrySearch").placeholder =
-                translations[lang]["search_country"];
-
-            // Sauvegarder la préférence
-            localStorage.setItem("preferredLanguage", lang);
-        }
-
-        // Initialisation
-        document.addEventListener("DOMContentLoaded", function() {
-            // Récupérer la langue sauvegardée ou détecter la langue du navigateur
-            const savedLanguage = localStorage.getItem("preferredLanguage");
-            const browserLanguage = navigator.language.slice(0, 2);
-
-            if (savedLanguage) {
-                changeLanguage(savedLanguage);
-            } else if (translations[browserLanguage]) {
-                changeLanguage(browserLanguage);
-            }
-
-            // Gestion des menus déroulants
-            const languageToggle = document.getElementById("languageToggle");
-            const dropdownLanguage = document.getElementById("dropdownLanguage");
-
-            languageToggle.addEventListener("click", (e) => {
-                e.stopPropagation();
-                dropdownLanguage.style.display =
-                    dropdownLanguage.style.display === "block" ? "none" : "block";
-            });
-
-            document.addEventListener("click", (e) => {
-                if (!e.target.closest(".language-dropdown")) {
-                    dropdownLanguage.style.display = "none";
-                }
-            });
-
-            // ... (le reste de votre code existant pour les pays) ...
-        });
-
-        // ... (le reste de votre code JavaScript existant) ...
-    </script>
-
-
-    <script>
-        let lastScrollTop = 0;
-        const header = document.getElementById("mainHeader");
-
-        window.addEventListener("scroll", function() {
-            const scrollTop =
-                window.pageYOffset || document.documentElement.scrollTop;
-
-            if (scrollTop > lastScrollTop) {
-                // On descend → cacher le header
-                header.style.top = "-150px"; // adapte cette valeur à la hauteur de ton header
-            } else {
-                // On remonte → afficher le header
-                header.style.top = "0";
-            }
-
-            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // pour éviter valeurs négatives
-        });
-    </script>
-
-    <script>
-        // Gestion des dropdowns
-        function setupDropdown(toggleId, dropdownId) {
-            const toggle = document.getElementById(toggleId);
-            const dropdown = document.getElementById(dropdownId);
-
-            toggle.addEventListener("click", function(e) {
-                e.stopPropagation();
-                // Ferme tous les autres dropdowns
-                document.querySelectorAll(".dropdown-menu").forEach((d) => {
-                    if (d.id !== dropdownId) d.style.display = "none";
-                });
-                // Ouvre/ferme le dropdown actuel
-                dropdown.style.display =
-                    dropdown.style.display === "block" ? "none" : "block";
-            });
-        }
-
-        // Initialisation des dropdowns
-        setupDropdown("userToggle", "dropdownUser");
-        setupDropdown("helpToggle", "dropdownHelp");
-
-        // Ferme les dropdowns quand on clique ailleurs
-        document.addEventListener("click", function() {
-            document.querySelectorAll(".dropdown-menu").forEach((d) => {
-                d.style.display = "none";
-            });
-        });
-
-        // Animation du point de notification utilisateur
-        setInterval(() => {
-            const pulse = document.querySelector(".user-pulse");
-            if (Math.random() > 0.8) {
-                pulse.style.display = "block";
-                setTimeout(() => {
-                    pulse.style.display = "none";
-                }, 5000);
-            }
-        }, 30000);
-    </script>
-
-    <script>
-        // Script pour le menu déroulant
-        document
-            .querySelector(".help-dropdown button")
-            .addEventListener("click", function(e) {
-                e.stopPropagation();
-                const dropdown = document.querySelector(".dropdown-content");
-                dropdown.style.display =
-                    dropdown.style.display === "block" ? "none" : "block";
-            });
-
-        // Fermer le menu si on clique ailleurs
-        document.addEventListener("click", function() {
-            document.querySelector(".dropdown-content").style.display = "none";
-        });
-
-        // Empêcher la fermeture quand on clique dans le menu
-        document
-            .querySelector(".dropdown-content")
-            .addEventListener("click", function(e) {
-                e.stopPropagation();
-            });
-    </script>
-
-    <script>
-        // Script pour le menu déroulant
-        document
-            .querySelector(".help-dropdown button")
-            .addEventListener("click", function(e) {
-                e.stopPropagation();
-                const dropdown = document.querySelector(".dropdown-content");
-                dropdown.style.display =
-                    dropdown.style.display === "block" ? "none" : "block";
-            });
-
-        // Fermer le menu si on clique ailleurs
-        document.addEventListener("click", function() {
-            document.querySelector(".dropdown-content").style.display = "none";
-        });
-
-        // Empêcher la fermeture quand on clique dans le menu
-        document
-            .querySelector(".dropdown-content")
-            .addEventListener("click", function(e) {
-                e.stopPropagation();
-            });
-    </script>
-
-    <script>
-        // Chargement différé pour améliorer les performances
-        document.addEventListener("DOMContentLoaded", function() {
-            const iframe = document.querySelector(".youtube-container iframe");
-            iframe.setAttribute("src", iframe.getAttribute("src"));
-        });
-    </script>
-    <script>
-        // Gestion des likes
-        document.querySelectorAll(".like-btn").forEach((btn) => {
-            btn.addEventListener("click", function() {
-                this.classList.toggle("liked");
-                const icon = this.querySelector("i");
-                if (this.classList.contains("liked")) {
-                    icon.classList.remove("far");
-                    icon.classList.add("fas");
-                } else {
-                    icon.classList.remove("fas");
-                    icon.classList.add("far");
-                }
-            });
-        });
-
-        // Gestion du panier
-        let cart = [];
-        const cartIcon = document.getElementById("cart-icon");
-        const cartCount = cartIcon.querySelector(".cart-count");
-        const checkoutModal = document.getElementById("checkout-modal");
-        const closeModal = document.querySelector(".close-modal");
-        const cartItemsContainer = document.getElementById("cart-items");
-        const subtotalElement = document.getElementById("subtotal");
-        const totalElement = document.getElementById("total");
-
-        // Ouvrir le panier
-        cartIcon.addEventListener("click", function(e) {
-            e.preventDefault();
-            updateCartDisplay();
-            checkoutModal.style.display = "block";
-        });
-
-        // Fermer le modal
-        closeModal.addEventListener("click", function() {
-            checkoutModal.style.display = "none";
-        });
-
-        // Ajouter au panier
-        document.querySelectorAll(".btn-add-to-cart").forEach((btn) => {
-            btn.addEventListener("click", function() {
-                const id = this.getAttribute("data-id");
-                const name = this.getAttribute("data-name");
-                const price = parseFloat(this.getAttribute("data-price"));
-
-                // Vérifier si l'article est déjà dans le panier
-                const existingItem = cart.find((item) => item.id === id);
-
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                } else {
-                    cart.push({
-                        id,
-                        name,
-                        price,
-                        quantity: 1,
-                    });
-                }
-
-                // Mettre à jour le compteur du panier
-                updateCartCount();
-
-                // Afficher une notification
-                alert(`${name} a été ajouté à votre panier!`);
-            });
-        });
-
-        // Mettre à jour le compteur du panier
-        function updateCartCount() {
-            const totalItems = cart.reduce(
-                (total, item) => total + item.quantity,
-                0
-            );
-            cartCount.textContent = totalItems;
-        }
-
-        // Mettre à jour l'affichage du panier
-        function updateCartDisplay() {
-            cartItemsContainer.innerHTML = "";
-
-            if (cart.length === 0) {
-                cartItemsContainer.innerHTML = "<p>Votre panier est vide.</p>";
-                subtotalElement.textContent = "€0.00";
-                totalElement.textContent = "€0.00";
-                return;
-            }
-
-            let subtotal = 0;
-
-            cart.forEach((item) => {
-                const itemTotal = item.price * item.quantity;
-                subtotal += itemTotal;
-
-                const itemElement = document.createElement("div");
-                itemElement.className = "summary-item";
-                itemElement.innerHTML = `
-                            <span>${item.name} x${item.quantity}</span>
-                            <span>€${itemTotal.toFixed(2)}</span>
-                        `;
-                cartItemsContainer.appendChild(itemElement);
-            });
-
-            subtotalElement.textContent = `€${subtotal.toFixed(2)}`;
-            totalElement.textContent = `€${subtotal.toFixed(2)}`;
-        }
-
-        // Appliquer un coupon
-        document
-            .getElementById("apply-coupon")
-            .addEventListener("click", function() {
-                const couponCode = document.getElementById("coupon").value;
-
-                if (couponCode.toUpperCase() === "KELU15") {
-                    const subtotalText = subtotalElement.textContent;
-                    const subtotal = parseFloat(subtotalText.replace("€", ""));
-                    const discount = subtotal * 0.15;
-                    const total = subtotal - discount;
-
-                    // Ajouter la réduction au résumé
-                    const discountElement = document.createElement("div");
-                    discountElement.className = "summary-item";
-                    discountElement.innerHTML = `
-                            <span>Réduction (15%)</span>
-                            <span>-€${discount.toFixed(2)}</span>
-                        `;
-
-                    // Vérifier si la réduction est déjà affichée
-                    if (!document.getElementById("discount-element")) {
-                        discountElement.id = "discount-element";
-                        cartItemsContainer.appendChild(discountElement);
-                    } else {
-                        document.getElementById("discount-element").innerHTML =
-                            discountElement.innerHTML;
-                    }
-
-                    totalElement.textContent = `€${total.toFixed(2)}`;
-                    alert("Code promo appliqué avec succès!");
-                } else {
-                    alert("Code promo invalide");
-                }
-            });
-
-        // Passer à la livraison
-        document
-            .getElementById("proceed-to-checkout")
-            .addEventListener("click", function() {
-                alert("Fonctionnalité de paiement à implémenter");
-                // Ici, vous pourriez ajouter la logique pour passer à l'étape suivante du checkout
-            });
-
-        // Gestion des boutons flottants
-        document
-            .querySelector(".floating-buttons button:nth-child(1)")
-            .addEventListener("click", function() {
-                alert(
-                    "Fonctionnalité de partage sur les réseaux sociaux à implémenter"
-                );
-            });
-
-        document
-            .querySelector(".floating-buttons button:nth-child(2)")
-            .addEventListener("click", function() {
-                alert("Fonctionnalité de cagnotte commune à implémenter");
-            });
-
-        // Redirection vers la page de détails au clic sur l'image du produit
-        document.querySelectorAll(".product-img").forEach((img, index) => {
-            img.style.cursor = "pointer";
-            img.addEventListener("click", function() {
-                // Liste des IDs des produits dans le même ordre qu'ils apparaissent sur la page
-                const productIds = ["1", "2", "3",
-                    "4"
-                ]; // Correspond aux data-id des boutons "Ajouter au panier"
-
-                // Récupérer l'ID du produit correspondant
-                const productId = productIds[index];
-
-                // Rediriger vers la page de détails avec l'ID en paramètre
-                window.location.href = `product-details.html?id=${productId}`;
-            });
-        });
-    </script>
-
-    <script>
-        // Navigation entre les étapes
-        document
-            .getElementById("proceed-to-delivery")
-            .addEventListener("click", function() {
-                document.getElementById("checkout-modal").style.display = "none";
-                document.getElementById("delivery-modal").style.display = "block";
-            });
-
-        document
-            .getElementById("proceed-to-payment")
-            .addEventListener("click", function() {
-                document.getElementById("delivery-modal").style.display = "none";
-                document.getElementById("payment-modal").style.display = "block";
-            });
-
-        document
-            .getElementById("confirm-order")
-            .addEventListener("click", function() {
-                document.getElementById("payment-modal").style.display = "none";
-                document.getElementById("confirmation-modal").style.display = "block";
-            });
-
-        // Boutons de retour
-        document
-            .getElementById("back-to-cart")
-            .addEventListener("click", function() {
-                document.getElementById("delivery-modal").style.display = "none";
-                document.getElementById("checkout-modal").style.display = "block";
-            });
-
-        document
-            .getElementById("back-to-delivery")
-            .addEventListener("click", function() {
-                document.getElementById("payment-modal").style.display = "none";
-                document.getElementById("delivery-modal").style.display = "block";
-            });
-
-        document
-            .getElementById("return-to-shop")
-            .addEventListener("click", function() {
-                document.getElementById("confirmation-modal").style.display = "none";
-                // Redirection vers la page d'accueil
-                window.location.href = "/";
-            });
-
-        // Fermeture des modals
-        document.querySelectorAll(".close-modal").forEach(function(btn) {
-            btn.addEventListener("click", function() {
-                this.closest(".modal").style.display = "none";
-            });
-        });
-
-        // Ouverture du modal panier (exemple)
-        function openCartModal() {
-            document.getElementById("checkout-modal").style.display = "block";
-        }
-    </script>
-
-    <script>
-        // 🔄 Filtrage dynamique des commandes
-        document.querySelectorAll('.filter-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                // Retirer la classe active de tous les boutons
-                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                // Activer le bouton cliqué
-                button.classList.add('active');
-
-                const filter = button.getAttribute('data-filter');
-
-                document.querySelectorAll('.order-card').forEach(card => {
-                    const status = card.getAttribute('data-status');
-
-                    if (filter === 'all' || status === filter) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const buttons = document.querySelectorAll('.filter-btn');
-            const cards = document.querySelectorAll('.order-card');
-
-            // Message "aucun résultat" (créé une seule fois)
-            let emptyMsg = document.getElementById('orders-empty-filter');
-            if (!emptyMsg) {
-                emptyMsg = document.createElement('p');
-                emptyMsg.id = 'orders-empty-filter';
-                emptyMsg.textContent = 'Aucune commande pour ce filtre.';
-                emptyMsg.style.cssText = 'text-align:center;color:#666;display:none;margin-top:10px;';
-                const list = document.querySelector('.orders-list');
-                list && list.appendChild(emptyMsg);
-            }
-
-            function applyFilter(filter) {
-                let visibleCount = 0;
-
-                cards.forEach(card => {
-                    const status = (card.getAttribute('data-status') || '').toLowerCase();
-                    const show = (filter === 'all') || (status === filter);
-                    card.style.display = show ? '' : 'none';
-                    if (show) visibleCount++;
-                });
-
-                emptyMsg.style.display = visibleCount ? 'none' : '';
-            }
-
-            buttons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // style actif
-                    buttons.forEach(b => {
-                        b.classList.remove('active');
-                        b.style.background = '#f1f1f1';
-                        b.style.color = '#000';
-                    });
-                    btn.classList.add('active');
-                    btn.style.background = '#1f4e5f';
-                    btn.style.color = '#fff';
-
-                    // filtre
-                    const filter = btn.getAttribute('data-filter');
-                    applyFilter(filter);
-                });
-            });
-
-            // état initial = “Toutes”
-            const active = document.querySelector('.filter-btn.active');
-            applyFilter(active ? active.getAttribute('data-filter') : 'all');
-        });
-    </script>
-
-
-    <script src="js/app-auth.js" defer></script>
-
-    <script src="js/main.js"></script>
 </body>
 
 </html>

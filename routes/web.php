@@ -11,6 +11,10 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\FavoriteController;
+
+
+
 
 use App\Http\Controllers\Admin\DashboardController; // admin
 
@@ -29,6 +33,28 @@ Route::middleware('guest')->group(function () {
 
 
 Route::get('/decouvrir', [ProductController::class, 'discover'])->name('products.discover');
+Route::post('/products/{product}/like', [ProductController::class, 'toggleLike'])->name('products.like');
+Route::post('/products/{product}/view'
+, [ProductController::class, 'trackView'])->name('products.view');
+
+
+
+Route::get('/products/{product}', [ProductController::class, 'show'])
+    ->name('products.show');
+
+    // avis
+Route::post('/products/{product}/review', [ProductController::class, 'storeReview'])
+    ->name('products.review');
+
+// favoris (nécessite login)
+Route::post('/products/{product}/favorite', [ProductController::class, 'toggleFavorite'])
+    ->middleware('auth')
+    ->name('products.favorite');
+
+
+    Route::get('/mes-favoris', [FavoriteController::class, 'index'])
+    ->middleware('auth')
+    ->name('favorites.index');
 
 // inscriptions via POST (si tu utilises des formulaires custom)
 Route::post('/register-client', [AuthController::class, 'registerClient'])->name('register.client');
@@ -45,8 +71,12 @@ Route::post('/logout', function () {
 // =============================
 // 🔍 Recherche
 // =============================
-Route::get('/search', [SearchController::class, 'index'])->name('search');
+// Route::get('/search', [SearchController::class, 'index'])->name('search');
 
+
+
+Route::get('/search', [SearchController::class, 'results'])->name('search.results');
+Route::get('/search/suggest', [SearchController::class, 'suggest'])->name('search.suggest');
 // =============================
 // 📂 Catégories (publiques)
 // =============================
@@ -59,7 +89,7 @@ Route::get('/categories/{id}/products', [CategoryController::class, 'getProducts
 // 🛍️ Produits (publics)
 // =============================
 Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{product}', [ProductController::class, 'show']);
+ //Route::get('/products/{product}', [ProductController::class, 'show']);
 
 // =============================
 // 👤 Espace connecté (web)

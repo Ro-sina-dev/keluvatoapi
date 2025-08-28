@@ -2,29 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Product;
+use App\Models\Favorite;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class FavoriteController extends Controller
 {
-    public function index(Request $req)
+    public function index(Request $request)
     {
-        return $req->user()
-            ->belongsToMany(Product::class, 'favorites')
-            ->select('products.id','name','price','currency','images')
-            ->get();
-    }
+        $userId = Auth::id();
 
-    public function store(Request $req, Product $product)
-    {
-        $req->user()->favorites()->syncWithoutDetaching([$product->id]);
-        return response()->json(['ok'=>true]);
-    }
+        // Récupère les produits favoris (actifs) via la table favorites
+        $favoriteProducts = \App\Models\Product::query()
+            ->whereIn('id', Favorite::where('user_id', $userId)->pluck('product_id'))
+            ->where('is_active', true)
+            ->latest()
+            ->paginate(24)
+            ->withQueryString();
 
-    public function destroy(Request $req, Product $product)
-    {
-        $req->user()->favorites()->detach($product->id);
-        return response()->json(['ok'=>true]);
+        return view('favorites.index', compact('favoriteProducts'));
     }
 }

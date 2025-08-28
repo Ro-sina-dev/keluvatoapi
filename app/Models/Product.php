@@ -33,5 +33,14 @@ class Product extends Model
     return $this->belongsToMany(Category::class);
 }
 
+public function reviews()
+{
+    return $this->hasMany(\App\Models\Review::class);
+}
+
+public function favorites()
+{
+    return $this->hasMany(\App\Models\Favorite::class);
+}
 
 }
