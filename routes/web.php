@@ -99,8 +99,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
 
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
-    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
 
     // avatar (même si l'image est en localStorage, la route existe)
     Route::put('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
@@ -153,3 +151,26 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 });
+
+   //Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
+    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+
+
+
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+
+// Panier (maj quantités / suppression)
+Route::post('/checkout/cart', [CheckoutController::class, 'updateCart'])->name('checkout.cart.update');
+
+// Sauvegarder livraison → aller au paiement
+Route::post('/checkout/delivery', [CheckoutController::class, 'saveDelivery'])->name('checkout.delivery.save');
+
+// Afficher paiement
+Route::get('/checkout/payment', [CheckoutController::class, 'payment'])->name('checkout.payment');
+
+// Placer la commande (paiement simulé) → confirmation
+Route::post('/checkout/place', [CheckoutController::class, 'place'])->name('checkout.place');
+
+// Page de confirmation
+Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+

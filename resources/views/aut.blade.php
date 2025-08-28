@@ -1280,3 +1280,135 @@
             applyFilter(active ? active.getAttribute('data-filter') : 'all');
         });
     </script>
+
+
+
+
+
+
+
+
+payement
+
+
+
+
+
+ <script>
+        (function() {
+            const CART_KEY = "cart";
+            let cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+
+            // DOM
+            const cartLink = document.getElementById("cart-link");
+            const cartCountEl = cartLink ?
+                cartLink.querySelector(".cart-count") :
+                null;
+            const checkoutModal = document.getElementById("checkout-modal");
+            const closeModal = checkoutModal ?
+                checkoutModal.querySelector(".close-modal") :
+                null;
+            const cartItemsContainer = document.getElementById("cart-items");
+            const subtotalElement = document.getElementById("subtotal");
+            const totalElement = document.getElementById("total");
+
+            // Utils
+            const euro = (n) => `€${Number(n).toFixed(2)}`;
+            const saveCart = () =>
+                localStorage.setItem(CART_KEY, JSON.stringify(cart));
+
+            function updateCartCount() {
+                if (!cartCountEl) return;
+                const totalItems = cart.reduce((t, i) => t + i.quantity, 0);
+                cartCountEl.textContent = totalItems;
+            }
+
+            function updateCartDisplay() {
+                if (!cartItemsContainer || !subtotalElement || !totalElement) return;
+
+                cartItemsContainer.innerHTML = "";
+                if (cart.length === 0) {
+                    cartItemsContainer.innerHTML = "<p>Votre panier est vide.</p>";
+                    subtotalElement.textContent = euro(0);
+                    totalElement.textContent = euro(0);
+                    return;
+                }
+
+                let subtotal = 0;
+                cart.forEach((item) => {
+                    const itemTotal = item.price * item.quantity;
+                    subtotal += itemTotal;
+
+                    const row = document.createElement("div");
+                    row.className = "summary-item";
+                    row.innerHTML = `<span>${item.name} x${item.quantity
+                        }</span><span>${euro(itemTotal)}</span>`;
+                    cartItemsContainer.appendChild(row);
+                });
+
+                subtotalElement.textContent = euro(subtotal);
+                totalElement.textContent = euro(subtotal);
+            }
+
+            // Ajouter au panier
+            document.querySelectorAll(".btn-add-to-cart").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const id = btn.getAttribute("data-id");
+                    const name = btn.getAttribute("data-name");
+                    const price = parseFloat(btn.getAttribute("data-price") || "0");
+
+                    const existing = cart.find((i) => i.id === id);
+                    if (existing) existing.quantity += 1;
+                    else cart.push({
+                        id,
+                        name,
+                        price,
+                        quantity: 1
+                    });
+
+                    saveCart();
+                    updateCartCount();
+                    alert(`${name} a été ajouté à votre panier !`);
+                });
+            });
+
+            // Clic sur l'icône Panier
+            if (cartLink) {
+                cartLink.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    const userToken = localStorage.getItem("userToken");
+
+                    // Non connecté → login
+                    if (!userToken) {
+                        window.location.href = "{{ route('login') }}";
+                        return;
+                    }
+
+                    // Connecté → modal si présent, sinon page panier
+                    if (checkoutModal) {
+                        updateCartDisplay();
+                        checkoutModal.style.display = "block";
+                    } else {
+                        window.location.href = "checkout.html";
+                    }
+                });
+            }
+
+            // Fermeture du modal
+            if (closeModal && checkoutModal) {
+                closeModal.addEventListener(
+                    "click",
+                    () => (checkoutModal.style.display = "none")
+                );
+                window.addEventListener("click", (e) => {
+                    if (e.target === checkoutModal)
+                        checkoutModal.style.display = "none";
+                });
+            }
+
+            // Init compteur
+            updateCartCount();
+        })();
+    </script>
+
+    welcome header

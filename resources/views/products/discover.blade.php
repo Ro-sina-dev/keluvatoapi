@@ -353,7 +353,10 @@
                                 <span>👁 <span data-view-count-inline>{{ $p->views_count }}</span></span>
                             </div>
                             <button class="btn-add-to-cart" type="button" data-id="{{ $p->id }}"
-                                data-name="{{ $p->name }}" data-price="{{ $display }}">Ajouter au
+                                data-name="{{ $p->name }}" data-price="{{ $display }} "
+                                 data-image="{{ $img /* ton URL d’image principale */ }}
+
+                                ">Ajouter au
                                 panier</button>
                         </div>
                     </article>
