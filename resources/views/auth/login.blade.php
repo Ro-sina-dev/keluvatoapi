@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Connexion | Keluvato Group</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
@@ -499,31 +501,7 @@
     </script>
 
 
-    <script>
-      // Gestion déconnexion
-      document.addEventListener("click", async (e) => {
-        if (e.target.closest("#logoutBtn")) {
-          e.preventDefault();
-          try {
-            const token = localStorage.getItem("userToken");
-            if (token) {
-              await fetch("{{ url('/logout') }}", {
-                method: "POST",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "X-Requested-With": "XMLHttpRequest",
-                  "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-              });
-            }
-          } catch (_) {}
-          localStorage.removeItem("userToken");
-          localStorage.removeItem("authUser");
-          alert("Déconnecté");
-          window.location.reload();
-        }
-      });
-    </script>
 
+  <script src="{{ asset('js/google-translate.js') }}"></script>
   </body>
 </html>

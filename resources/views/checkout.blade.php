@@ -831,17 +831,36 @@
                 goStep(4);
             });
 
+            // ========= Sync avec serveur =========
+            async function syncCartWithServer() {
+                const cartData = Cart.get();
+                try {
+                    await fetch('/checkout/sync', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ cart: cartData })
+                    });
+                } catch (error) {
+                    console.error('Erreur sync panier:', error);
+                }
+            }
+
             // ========= Init =========
             function init() {
                 renderCart();
                 updateSummary();
+                syncCartWithServer(); // Synchroniser le panier au chargement
                 goStep(1);
             }
+            
             init();
         })();
     </script>
 
-
+<script src="{{ asset('js/google-translate.js') }}"></script>
 </body>
 
 </html>

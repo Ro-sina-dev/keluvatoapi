@@ -92,6 +92,10 @@
     </div>
 </div>
 
+<script src="{{ asset('js/google-translate.js') }}"></script>
+  </body>
+</html>
+
 <script>
 let selectedType = null;
 

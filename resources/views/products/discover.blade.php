@@ -1327,7 +1327,8 @@
     </script>
 
     <!-- Place tes bundles compilés ici si besoin -->
-    <script src="{{ asset('js/main.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ asset('js/google-translate.js') }}"></script>
     <script src="{{ asset('js/cart-core.js') }}" defer></script>
     <script src="{{ asset('js/app-auth.js') }}" defer></script>
 

@@ -50,34 +50,56 @@ class AuthController extends Controller
         return redirect()->route('home');
     }
 
-        public function login(Request $request)
-        {
-            $credentials = $request->validate([
-                'email'    => ['required', 'email'],
-                'password' => ['required'],
-            ]);
+public function login(Request $request)
+{
+    $credentials = $request->validate([
+        'email'    => ['required', 'email'],
+        'password' => ['required'],
+    ]);
 
-            if (Auth::attempt($credentials, $request->filled('remember'))) {
-                $request->session()->regenerate();
+    // 🐛 Log avant tentative de connexion
+    \Log::info('Tentative de connexion:', [
+        'email' => $credentials['email'],
+        'password_provided' => !empty($credentials['password'])
+    ]);
 
-                $user = Auth::user();
+    if (Auth::attempt($credentials, $request->filled('remember'))) {
+        $request->session()->regenerate();
 
-                if ($user->role === 'admin') {
-                    return redirect()->route('admin.dashboard');
-                }
+        $user = Auth::user();
 
-                if ($user->role === 'pro') {
-                    return redirect()->route('profile');
-                }
+        // 🐛 Log après connexion réussie
+        \Log::info('Connexion réussie:', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'role' => $user->role,
+            'name' => $user->name
+        ]);
 
-                return redirect()->route('home');
-            }
-
-            return back()->withErrors([
-                'email' => 'Identifiants incorrects.',
-            ])->onlyInput('email');
+        if ($user->role === 'admin') {
+            \Log::info('Redirection vers admin dashboard');
+            return redirect()->route('admin.dashboard');
         }
 
+        if ($user->role === 'pro') {
+            \Log::info('Redirection vers profile');
+            return redirect()->route('profile');
+        }
+
+        \Log::info('Redirection vers home');
+        return redirect()->route('home');
+    }
+
+    // 🐛 Log si échec de connexion
+    \Log::warning('Échec de connexion:', [
+        'email' => $credentials['email'],
+        'user_exists' => \App\Models\User::where('email', $credentials['email'])->exists()
+    ]);
+
+    return back()->withErrors([
+        'email' => 'Identifiants incorrects.',
+    ])->onlyInput('email');
+}
 
 
     // Qui suis-je ?

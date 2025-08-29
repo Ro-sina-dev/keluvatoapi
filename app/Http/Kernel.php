@@ -23,18 +23,9 @@ class Kernel extends HttpKernel
         ],
     ];
 
-    protected $routeMiddleware = [
-        'auth'     => \App\Http\Middleware\Authenticate::class,
-        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-
-        // ✅ ALIAS ADMIN (indispensable)
-
-        // ❗ Seulement si tu as vraiment ce middleware :
-        // 'role'  => \App\Http\Middleware\RoleMiddleware::class,
-    ];
-
     protected $middlewareAliases = [
-    // ... autres middlewares
-    'admin' => \App\Http\Middleware\AdminMiddleware::class,
-];
+        'auth' => \App\Http\Middleware\Authenticate::class,
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+    ];
 }

@@ -9,12 +9,10 @@ class CheckoutController extends Controller
 {
     public function index()
     {
+        // Récupérer le panier depuis localStorage (côté client) ou session
         $cart = session()->get('cart', []);
-       // return view('checkout', compact('cart'));
-
-       // $cart = session('cart', []); // [ ['id'=>..,'name'=>..,'price'=>..,'qty'=>..,'image'=>..], ... ]
         $totals = $this->totals($cart);
-        return view('checkout', compact('cart'));
+        return view('checkout', compact('cart', 'totals'));
     }
 
 
@@ -29,6 +27,15 @@ class CheckoutController extends Controller
 
 
 
+    /** Synchroniser le panier depuis localStorage */
+    public function syncCart(Request $request)
+    {
+        $cartData = $request->input('cart', []);
+        session(['cart' => $cartData]);
+        
+        return response()->json(['success' => true]);
+    }
+
     /** Mise à jour du panier (quantités / suppression) */
     public function updateCart(Request $r)
     {
@@ -37,7 +44,9 @@ class CheckoutController extends Controller
         // Suppression ligne ?
         if ($r->filled('remove')) {
             $id = (string) $r->input('remove');
-            $cart = $cart->reject(fn($it) => (string)$it['id'] === $id)->values();
+            $cart = $cart->reject(function($it) use ($id) {
+                return (string)$it['id'] === $id;
+            })->values();
         }
 
         // Mise à jour quantités ?
@@ -48,7 +57,9 @@ class CheckoutController extends Controller
                     $it['qty'] = $qty;
                 }
                 return $it;
-            })->filter(fn($it) => $it['qty'] > 0)->values();
+            })->filter(function($it) {
+                return $it['qty'] > 0;
+            })->values();
         }
 
         session(['cart' => $cart->all()]);
@@ -145,11 +156,12 @@ class CheckoutController extends Controller
     /** petit helper de totaux */
     private function totals(array $cart): array
     {
-        $sub = collect($cart)->reduce(function ($t, $it) {
-            $price = (float)($it['price'] ?? 0);
-            $qty   = (int)($it['qty'] ?? 0);
-            return $t + $price * $qty;
-        }, 0.0);
+        $sub = 0.0;
+        foreach ($cart as $item) {
+            $price = (float)($item['price'] ?? 0);
+            $qty   = (int)($item['qty'] ?? 0);
+            $sub += $price * $qty;
+        }
         return ['subtotal' => $sub, 'total' => $sub]; // pas de frais ni coupon ici
     }
 }

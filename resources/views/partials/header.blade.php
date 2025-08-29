@@ -2172,27 +2172,18 @@
     // Langue par défaut
     let currentLanguage = "fr";
 
-    // Fonction pour changer la langue
+    // Fonction pour changer la langue (sera remplacée par le traducteur automatique)
     function changeLanguage(lang) {
-        currentLanguage = lang;
-        document.querySelector(".language-code").textContent =
-            lang.toUpperCase();
-        document.getElementById("dropdownLanguage").style.display = "none";
-
-        // Mettre à jour les textes traduits
-        document.querySelectorAll(".translate").forEach((el) => {
-            const key = el.getAttribute("data-key");
-            el.textContent = translations[lang][key] || translations["fr"][key];
-        });
-
-        // Mettre à jour le placeholder de recherche
-        document.querySelector(".search-container input").placeholder =
-            translations[lang]["search_placeholder"];
-        document.getElementById("countrySearch").placeholder =
-            translations[lang]["search_country"];
-
-        // Sauvegarder la préférence
-        localStorage.setItem("preferredLanguage", lang);
+        // Cette fonction sera remplacée par KeluvateTranslator
+        if (window.keluvateTranslator) {
+            window.keluvateTranslator.changeLanguage(lang);
+        } else {
+            // Fallback temporaire
+            currentLanguage = lang;
+            document.querySelector(".language-code").textContent = lang.toUpperCase();
+            document.getElementById("dropdownLanguage").style.display = "none";
+            localStorage.setItem("preferredLanguage", lang);
+        }
     }
 
     // Initialisation
