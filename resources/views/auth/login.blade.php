@@ -356,7 +356,7 @@
                 <input type="password" name="password" class="form-control" placeholder="Mot de passe" required />
                 </div>
                 <div style="text-align: right; margin-bottom: 1rem">
-                <a href="#" style="color: var(--primary); font-size: 0.8rem">Mot de passe oublié ?</a>
+                <a href="{{ route('password.request') }}" style="color: var(--primary); font-size: 0.8rem">Mot de passe oublié ?</a>
                 </div>
                 <button type="submit" class="btn btn-primary">Se connecter</button>
 

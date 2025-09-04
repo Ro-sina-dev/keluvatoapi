@@ -32,7 +32,7 @@ class CheckoutController extends Controller
     {
         $cartData = $request->input('cart', []);
         session(['cart' => $cartData]);
-        
+
         return response()->json(['success' => true]);
     }
 

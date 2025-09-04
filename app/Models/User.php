@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Notifications\CustomResetPassword;
 
 class User extends Authenticatable
 {
@@ -43,6 +44,17 @@ class User extends Authenticatable
     // app/Models/User.php
 public function favorites() {
     return $this->belongsToMany(\App\Models\Product::class, 'favorites')->withTimestamps();
+}
+
+/**
+ * Send the password reset notification.
+ *
+ * @param  string  $token
+ * @return void
+ */
+public function sendPasswordResetNotification($token)
+{
+    $this->notify(new CustomResetPassword($token));
 }
 
 }

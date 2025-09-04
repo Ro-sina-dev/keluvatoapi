@@ -22,13 +22,38 @@ use App\Http\Controllers\CategoryPageController;
 Route::get('/', [WelcomeController::class, 'index'])->name('home');
 
 
-// Test route sans middleware admin d'abord
+// Routes admin
 Route::middleware(['auth'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        // Tableau de bord
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        
+        // Gestion des produits
+        Route::resource('products', 'App\Http\Controllers\Admin\ProductController');
+        
+        // Gestion des commandes
+        Route::get('/orders', function () {
+            return view('admin.orders');
+        })->name('orders');
+        
+        // Gestion des utilisateurs
+        Route::get('/users', function () {
+            return view('admin.users');
+        })->name('users');
+        
+        // Analytics
+        Route::get('/analytics', function () {
+            return view('admin.analytics');
+        })->name('analytics');
+        
+        // Gestion des couleurs
+        Route::get('/colors', [\App\Http\Controllers\Admin\ColorController::class, 'index'])->name('colors.index');
+        Route::post('/colors', [\App\Http\Controllers\Admin\ColorController::class, 'store'])->name('colors.store');
     });
+
+
 // =============================
 // 🔐 Authentification (publique)
 // =============================
@@ -41,7 +66,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/register-pro', [AuthController::class, 'registerPro'])->name('register.pro');
 
     // Mot de passe oublié
-    Route::get('/forgot-password', fn () => view('auth.forgot-password'))->name('password.request');
+    Route::get('/forgot-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    
+    // Réinitialisation du mot de passe
+    Route::get('/reset-password/{token}', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])->name('password.update');
 });
 
 // =============================
@@ -124,7 +154,7 @@ Route::middleware('auth')->group(function () {
 // =============================
 Route::middleware('auth:sanctum')->group(function () {
     // CRUD produits via API
-    Route::post('/products', [ProductController::class, 'store']);
-    Route::put('/products/{product}', [ProductController::class, 'update']);
-    Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+     //Route::post('/products', [ProductController::class, 'store']);
+    // Route::put('/products/{product}', [ProductController::class, 'update']);
+    // Route::delete('/products/{product}', [ProductController::class, 'destroy']);
 });

@@ -5,6 +5,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
 {
@@ -18,7 +19,10 @@ class Product extends Model
         'stock',
         'images',
         'is_active',
+        'colors'
     ];
+
+    protected $with = ['colors'];
 
     protected $casts = [
         'price'     => 'decimal:2',
@@ -29,15 +33,19 @@ class Product extends Model
 
 
     public function categories()
-{
-    return $this->belongsToMany(Category::class);
-}
+    {
+        return $this->belongsToMany(Category::class);
+    }
 
-public function reviews()
-{
-    return $this->hasMany(\App\Models\Review::class);
-}
+    public function colors(): BelongsToMany
+    {
+        return $this->belongsToMany(Color::class);
+    }
 
+    public function reviews()
+    {
+        return $this->hasMany(\App\Models\Review::class);
+    }
 public function favorites()
 {
     return $this->hasMany(\App\Models\Favorite::class);

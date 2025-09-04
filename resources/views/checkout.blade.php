@@ -7,7 +7,17 @@
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Keluvato – Meubles, Décoration & Bricolage" />
+    <meta name="twitter:description"
+        content="Découvrez nos meubles, décorations et solutions de bricolage pour embellir votre maison." />
+    <meta name="twitter:image" content="{{ asset('assets/images/og-image.jpg') }}" />
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <!-- Fonts et icônes externes -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <style>
         :root {
             --primary: #1f4e5f;
@@ -453,7 +463,8 @@
                         </div>
                         <div class="form-group">
                             <label class="label" for="delivery-phone">Téléphone</label>
-                            <input class="control" id="delivery-phone" type="tel" placeholder="+33 6 12 34 56 78">
+                            <input class="control" id="delivery-phone" type="tel"
+                                placeholder="+33 6 12 34 56 78">
                         </div>
                     </div>
 
@@ -588,279 +599,255 @@
     </div>
 
     <script>
-        (() => {
-            // ========= Config (sans API) =========
-            const CURRENCY = 'EUR';
-            const fmt = (n, c = CURRENCY) => new Intl.NumberFormat('fr-FR', {
-                style: 'currency',
-                currency: c
-            }).format(+n || 0);
+(() => {
+  // ========= Config (sans API) =========
+  const CURRENCY = 'EUR';
+  const fmt = (n, c = CURRENCY) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c }).format(+n || 0);
 
-            // ========= Panier (localStorage) =========
-            const Cart = {
-                KEY: 'cart',
-                get() {
-                    try {
-                        return JSON.parse(localStorage.getItem(this.KEY) || '[]');
-                    } catch (e) {
-                        return [];
-                    }
-                },
-                set(items) {
-                    localStorage.setItem(this.KEY, JSON.stringify(items));
-                },
-                subtotal(items = this.get()) {
-                    return items.reduce((t, i) => t + (+i.price || 0) * (+i.qty || 0), 0);
-                },
-                updateQty(id, q) {
-                    const arr = this.get();
-                    const it = arr.find(x => String(x.id) === String(id));
-                    if (!it) return;
-                    it.qty = Math.max(0, +q || 0);
-                    if (it.qty === 0) arr.splice(arr.indexOf(it), 1);
-                    this.set(arr);
-                    renderCart();
-                    updateSummary();
-                },
-                remove(id) {
-                    const arr = this.get().filter(x => String(x.id) !== String(id));
-                    this.set(arr);
-                    renderCart();
-                    updateSummary();
-                },
-                clear() {
-                    localStorage.setItem(this.KEY, '[]');
-                }
-            };
+  // Normalise une URL d'image stockée côté client (local/prod/webview)
+  function normalizeImg(u) {
+    if (!u) return '';
+    if (typeof u !== 'string') {
+      try { u = String(u); } catch { return ''; }
+    }
+    // 1) Enlève un host local (127.0.0.1 / localhost)
+    u = u.replace(/^https?:\/\/(127\.0\.0\.1(:\d+)?|localhost(:\d+)?)/i, '');
+    // 2) Conserve http(s) ou data:
+    if (/^(https?:\/\/|data:)/i.test(u)) return u;
+    // 3) Déjà /storage/... → préfixe domaine courant
+    if (u.startsWith('/storage/')) return window.location.origin + u;
+    // 4) Sinon, suppose un chemin public → /storage/chemin
+    return window.location.origin + '/storage/' + u.replace(/^\/+/, '');
+  }
 
-            // ========= Étapes & Stepper =========
-            const steps = ['step-cart', 'step-delivery', 'step-payment', 'step-confirm'].map(id => document
-                .getElementById(id));
-            const dots = ['stp1', 'stp2', 'stp3', 'stp4'].map(id => document.getElementById(id));
+  // ========= Panier (localStorage) =========
+  const Cart = {
+    KEY: 'cart',
+    get() {
+      try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); }
+      catch (e) { return []; }
+    },
+    set(items) { localStorage.setItem(this.KEY, JSON.stringify(items)); },
+    subtotal(items = this.get()) { return items.reduce((t, i) => t + (+i.price || 0) * (+i.qty || 0), 0); },
+    updateQty(id, q) {
+      const arr = this.get();
+      const it = arr.find(x => String(x.id) === String(id));
+      if (!it) return;
+      it.qty = Math.max(0, +q || 0);
+      if (it.qty === 0) arr.splice(arr.indexOf(it), 1);
+      this.set(arr);
+      renderCart();
+      updateSummary();
+    },
+    remove(id) {
+      const arr = this.get().filter(x => String(x.id) !== String(id));
+      this.set(arr);
+      renderCart();
+      updateSummary();
+    },
+    clear() { localStorage.setItem(this.KEY, '[]'); }
+  };
 
-            function goStep(n) {
-                steps.forEach((el, i) => el.style.display = (i === n - 1) ? 'block' : 'none');
-                dots.forEach((el, i) => {
-                    el.classList.remove('active', 'completed');
-                    if (i < n - 1) el.classList.add('completed');
-                    if (i === n - 1) el.classList.add('active');
-                });
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            }
+  // Migration locale des données du panier (quantity → qty, image, currency)
+  function normalizeCartData() {
+    const arr = Cart.get();
+    let changed = false;
+    arr.forEach(it => {
+      if (it.quantity != null && it.qty == null) { it.qty = +it.quantity || 1; delete it.quantity; changed = true; }
+      if (!it.image && it.img) { it.image = it.img; changed = true; }
+      if (!it.currency) { it.currency = 'EUR'; changed = true; }
+    });
+    if (changed) Cart.set(arr);
+  }
 
-            // ========= Résumé (unique) =========
-            let coupon = null; // {code, percent}
-            const sumSub = document.getElementById('sum-subtotal');
-            const sumCpn = document.getElementById('sum-coupon');
-            const sumTot = document.getElementById('sum-total');
+  // ========= Étapes & Stepper =========
+  const steps = ['step-cart', 'step-delivery', 'step-payment', 'step-confirm'].map(id => document.getElementById(id));
+  const dots  = ['stp1', 'stp2', 'stp3', 'stp4'].map(id => document.getElementById(id));
 
-            function totals() {
-                const sub = Cart.subtotal();
-                const disc = coupon ? sub * (coupon.percent / 100) : 0;
-                return {
-                    sub,
-                    disc,
-                    total: Math.max(0, sub - disc)
-                };
-            }
+  function goStep(n) {
+    steps.forEach((el, i) => el.style.display = (i === n - 1) ? 'block' : 'none');
+    dots.forEach((el, i) => {
+      el.classList.remove('active', 'completed');
+      if (i < n - 1) el.classList.add('completed');
+      if (i === n - 1) el.classList.add('active');
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
-            function updateSummary() {
-                const {
-                    sub,
-                    disc,
-                    total
-                } = totals();
-                sumSub.textContent = fmt(sub);
-                sumCpn.textContent = coupon ? `-${fmt(disc)} (${coupon.code})` : '—';
-                sumTot.textContent = fmt(total);
-            }
+  // ========= Résumé (unique) =========
+  let coupon = null; // {code, percent}
+  const sumSub = document.getElementById('sum-subtotal');
+  const sumCpn = document.getElementById('sum-coupon');
+  const sumTot = document.getElementById('sum-total');
 
-            // ========= Rendu panier (étape 1) =========
-            const cartList = document.getElementById('cart-items');
-            const cartEmpty = document.getElementById('cart-empty');
+  function totals() {
+    const sub  = Cart.subtotal();
+    const disc = coupon ? sub * (coupon.percent / 100) : 0;
+    return { sub, disc, total: Math.max(0, sub - disc) };
+  }
 
-            function renderCart() {
-                const items = Cart.get();
-                if (!items.length) {
-                    cartEmpty.style.display = 'block';
-                    cartList.innerHTML = '';
-                    return;
-                }
-                cartEmpty.style.display = 'none';
-                cartList.innerHTML = items.map(it => {
-                    const line = (+it.price || 0) * (+it.qty || 0);
-                    return `
+  function updateSummary() {
+    const { sub, disc, total } = totals();
+    sumSub.textContent = fmt(sub);
+    sumCpn.textContent = coupon ? `-${fmt(disc)} (${coupon.code})` : '—';
+    sumTot.textContent = fmt(total);
+  }
+
+  // ========= Rendu panier (étape 1) =========
+  const cartList  = document.getElementById('cart-items');
+  const cartEmpty = document.getElementById('cart-empty');
+
+  function renderCart() {
+    const items = Cart.get();
+    if (!items.length) {
+      cartEmpty.style.display = 'block';
+      cartList.innerHTML = '';
+      return;
+    }
+    cartEmpty.style.display = 'none';
+
+    cartList.innerHTML = items.map(it => {
+      const q = +it.qty || 0;
+      const line = (+it.price || 0) * q;
+      const imgSrc = normalizeImg(it.image) || 'https://via.placeholder.com/66?text=IMG';
+      return `
         <div class="cart-item" data-id="${it.id}">
-          <img src="${it.image || 'https://via.placeholder.com/66?text=IMG'}" alt="${(it.name||'').replace(/"/g,'&quot;')}">
+          <img src="${imgSrc}" alt="${(it.name||'').replace(/"/g,'&quot;')}">
           <div>
             <h3 class="item-title">${(it.name||'').replace(/</g,'&lt;')}</h3>
             <div class="item-meta">${fmt(it.price, it.currency||CURRENCY)}</div>
             <div class="qty">
               <button class="btn-ghost" data-act="dec">−</button>
-              <span class="qv">${it.qty}</span>
+              <span class="qv">${q}</span>
               <button class="btn-ghost" data-act="inc">+</button>
               <button class="btn-remove" data-act="rm">Supprimer</button>
             </div>
           </div>
           <div class="item-price">${fmt(line, it.currency||CURRENCY)}</div>
         </div>`;
-                }).join('');
+    }).join('');
 
-                // Bind
-                cartList.querySelectorAll('.cart-item').forEach(row => {
-                    const id = row.getAttribute('data-id');
-                    row.querySelector('[data-act="inc"]').addEventListener('click', () => {
-                        const it = Cart.get().find(x => String(x.id) === String(id));
-                        Cart.updateQty(id, (+it?.qty || 0) + 1);
-                    });
-                    row.querySelector('[data-act="dec"]').addEventListener('click', () => {
-                        const it = Cart.get().find(x => String(x.id) === String(id));
-                        Cart.updateQty(id, (+it?.qty || 0) - 1);
-                    });
-                    row.querySelector('[data-act="rm"]').addEventListener('click', () => Cart.remove(id));
-                });
-            }
+    // Bind
+    cartList.querySelectorAll('.cart-item').forEach(row => {
+      const id = row.getAttribute('data-id');
+      row.querySelector('[data-act="inc"]').addEventListener('click', () => {
+        const it = Cart.get().find(x => String(x.id) === String(id));
+        Cart.updateQty(id, (+it?.qty || 0) + 1);
+      });
+      row.querySelector('[data-act="dec"]').addEventListener('click', () => {
+        const it = Cart.get().find(x => String(x.id) === String(id));
+        Cart.updateQty(id, (+it?.qty || 0) - 1);
+      });
+      row.querySelector('[data-act="rm"]').addEventListener('click', () => Cart.remove(id));
+    });
+  }
 
-            // ========= Coupon =========
-            document.getElementById('btn-coupon').addEventListener('click', () => {
-                const code = (document.getElementById('coupon').value || '').trim().toUpperCase();
-                if (!code) {
-                    coupon = null;
-                    updateSummary();
-                    alert('Aucun code saisi.');
-                    return;
-                }
-                if (code === 'KELU15') {
-                    coupon = {
-                        code,
-                        percent: 15
-                    };
-                    updateSummary();
-                    alert('Réduction de 15% appliquée ✅');
-                } else {
-                    coupon = null;
-                    updateSummary();
-                    alert('Code invalide ❌');
-                }
-            });
+  // ========= Coupon =========
+  document.getElementById('btn-coupon').addEventListener('click', () => {
+    const code = (document.getElementById('coupon').value || '').trim().toUpperCase();
+    if (!code) { coupon = null; updateSummary(); alert('Aucun code saisi.'); return; }
+    if (code === 'KELU15') { coupon = { code, percent: 15 }; updateSummary(); alert('Réduction de 15% appliquée ✅'); }
+    else { coupon = null; updateSummary(); alert('Code invalide ❌'); }
+  });
 
-            // ========= Navigation =========
-            document.getElementById('go-delivery').addEventListener('click', () => {
-                if (!Cart.get().length) {
-                    alert('Votre panier est vide.');
-                    return;
-                }
-                goStep(2);
-            });
-            document.getElementById('back-cart').addEventListener('click', () => goStep(1));
+  // ========= Navigation =========
+  document.getElementById('go-delivery').addEventListener('click', () => {
+    if (!Cart.get().length) { alert('Votre panier est vide.'); return; }
+    goStep(2);
+  });
+  document.getElementById('back-cart').addEventListener('click', () => goStep(1));
 
-            // toggle méthodes de paiement
-            const pmrCard = document.getElementById('pmr-card');
-            const pmrPayPal = document.getElementById('pmr-paypal');
-            const pmrCod = document.getElementById('pmr-cod');
-            const pmCard = document.getElementById('pm-card');
-            const pmPayPal = document.getElementById('pm-paypal');
-            const pmCod = document.getElementById('pm-cod');
-            const cardFields = document.getElementById('card-fields');;
-            [pmrCard, pmrPayPal, pmrCod].forEach(r => {
-                r.addEventListener('change', () => {
-                    pmCard.classList.toggle('active', pmrCard.checked);
-                    pmPayPal.classList.toggle('active', pmrPayPal.checked);
-                    pmCod.classList.toggle('active', pmrCod.checked);
-                    cardFields.style.display = pmrCard.checked ? 'block' : 'none';
-                });
-            });
+  // toggle méthodes de paiement
+  const pmrCard   = document.getElementById('pmr-card');
+  const pmrPayPal = document.getElementById('pmr-paypal');
+  const pmrCod    = document.getElementById('pmr-cod');
+  const pmCard    = document.getElementById('pm-card');
+  const pmPayPal  = document.getElementById('pm-paypal');
+  const pmCod     = document.getElementById('pm-cod');
+  const cardFields = document.getElementById('card-fields');
 
-            document.getElementById('go-payment').addEventListener('click', () => {
-                const name = document.getElementById('full-name').value.trim();
-                const addr = document.getElementById('delivery-address').value.trim();
-                const city = document.getElementById('delivery-city').value.trim();
-                const zip = document.getElementById('delivery-zip').value.trim();
-                const phone = document.getElementById('delivery-phone').value.trim();
-                if (!name || !addr || !city || !zip || !phone) {
-                    alert('Merci de compléter tous les champs requis de livraison.');
-                    return;
-                }
-                goStep(3);
-            });
-            document.getElementById('back-delivery').addEventListener('click', () => goStep(2));
+  [pmrCard, pmrPayPal, pmrCod].forEach(r => {
+    r.addEventListener('change', () => {
+      pmCard.classList.toggle('active', pmrCard.checked);
+      pmPayPal.classList.toggle('active', pmrPayPal.checked);
+      pmCod.classList.toggle('active', pmrCod.checked);
+      cardFields.style.display = pmrCard.checked ? 'block' : 'none';
+    });
+  });
 
-            // ========= "Paiement" local & Confirmation (sans appel serveur) =========
-            document.getElementById('do-pay').addEventListener('click', () => {
-                if (!document.getElementById('terms-agree').checked) {
-                    alert('Veuillez accepter les CGV.');
-                    return;
-                }
-                const items = Cart.get();
-                if (!items.length) {
-                    alert('Votre panier est vide.');
-                    return;
-                }
+  document.getElementById('go-payment').addEventListener('click', () => {
+    const name  = document.getElementById('full-name').value.trim();
+    const addr  = document.getElementById('delivery-address').value.trim();
+    const city  = document.getElementById('delivery-city').value.trim();
+    const zip   = document.getElementById('delivery-zip').value.trim();
+    const phone = document.getElementById('delivery-phone').value.trim();
+    if (!name || !addr || !city || !zip || !phone) { alert('Merci de compléter tous les champs requis de livraison.'); return; }
+    goStep(3);
+  });
+  document.getElementById('back-delivery').addEventListener('click', () => goStep(2));
 
-                const shipping = {
-                    name: document.getElementById('full-name').value.trim(),
-                    address: document.getElementById('delivery-address').value.trim(),
-                    city: document.getElementById('delivery-city').value.trim(),
-                    zip: document.getElementById('delivery-zip').value.trim(),
-                    country: document.getElementById('delivery-country').value,
-                };
-                const method = (document.querySelector('input[name="pm"]:checked') || {}).value || 'card';
-                const {
-                    total
-                } = totals();
+  // ========= "Paiement" local & Confirmation (sans appel serveur) =========
+  document.getElementById('do-pay').addEventListener('click', () => {
+    if (!document.getElementById('terms-agree').checked) { alert('Veuillez accepter les CGV.'); return; }
+    const items = Cart.get();
+    if (!items.length) { alert('Votre panier est vide.'); return; }
 
-                // Génère un numéro de commande local lisible
-                const orderId = 'CMD-' + new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+    const shipping = {
+      name: document.getElementById('full-name').value.trim(),
+      address: document.getElementById('delivery-address').value.trim(),
+      city: document.getElementById('delivery-city').value.trim(),
+      zip: document.getElementById('delivery-zip').value.trim(),
+      country: document.getElementById('delivery-country').value,
+    };
+    const method = (document.querySelector('input[name="pm"]:checked') || {}).value || 'card';
+    const { total } = totals();
 
-                // Remplit la confirmation
-                document.getElementById('ord-id').textContent = orderId;
-                document.getElementById('ord-date').textContent = new Date().toLocaleString('fr-FR');
-                document.getElementById('ord-total').textContent = fmt(total);
-                document.getElementById('ord-pay').textContent = method.toUpperCase();
-                document.getElementById('ord-addr').textContent =
-                    `${shipping.name}\n${shipping.address}\n${shipping.zip} ${shipping.city}\n${shipping.country}`;
-                document.getElementById('cf-text-1').textContent = `Merci pour votre achat, ${shipping.name}.`;
-                document.getElementById('cf-text-2').textContent =
-                    `Votre commande ${orderId} a été passée avec succès.`;
+    const orderId = 'CMD-' + new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
 
-                // Vide le panier
-                Cart.clear();
-                goStep(4);
-            });
+    document.getElementById('ord-id').textContent   = orderId;
+    document.getElementById('ord-date').textContent = new Date().toLocaleString('fr-FR');
+    document.getElementById('ord-total').textContent= fmt(total);
+    document.getElementById('ord-pay').textContent  = method.toUpperCase();
+    document.getElementById('ord-addr').textContent =
+      `${shipping.name}\n${shipping.address}\n${shipping.zip} ${shipping.city}\n${shipping.country}`;
+    document.getElementById('cf-text-1').textContent = `Merci pour votre achat, ${shipping.name}.`;
+    document.getElementById('cf-text-2').textContent = `Votre commande ${orderId} a été passée avec succès.`;
 
-            // ========= Sync avec serveur =========
-            async function syncCartWithServer() {
-                const cartData = Cart.get();
-                try {
-                    await fetch('/checkout/sync', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({ cart: cartData })
-                    });
-                } catch (error) {
-                    console.error('Erreur sync panier:', error);
-                }
-            }
+    Cart.clear();
+    goStep(4);
+  });
 
-            // ========= Init =========
-            function init() {
-                renderCart();
-                updateSummary();
-                syncCartWithServer(); // Synchroniser le panier au chargement
-                goStep(1);
-            }
-            
-            init();
-        })();
-    </script>
+  // ========= Sync avec serveur =========
+  async function syncCartWithServer() {
+    const cartData = Cart.get();
+    try {
+      await fetch('/checkout/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ cart: cartData })
+      });
+    } catch (error) { console.error('Erreur sync panier:', error); }
+  }
 
-<script src="{{ asset('js/google-translate.js') }}"></script>
+  // ========= Init =========
+  function init() {
+    normalizeCartData();   // ← important : migrer les données AVANT le rendu
+    renderCart();
+    updateSummary();
+    syncCartWithServer();
+    goStep(1);
+  }
+
+  init();
+})();
+</script>
+
+
+    <script src="{{ asset('js/google-translate.js') }}"></script>
 </body>
 
 </html>

@@ -805,7 +805,6 @@
         })();
     </script>
 
-{{ ... }}
 
 <script src="{{ asset('js/google-translate.js') }}"></script>
 </body>

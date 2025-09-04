@@ -91,46 +91,46 @@ class ProductController extends Controller
 
 
 
-  public function show(Product $product)
-{
-    $related = \App\Models\Product::query()
-        ->where('is_active', true)
-        ->where('id', '!=', $product->id)
-        ->when($product->categories()->exists(), function ($q) use ($product) {
-            $catIds = $product->categories->pluck('id');
-            $q->whereHas('categories', fn($cq) => $cq->whereIn('categories.id', $catIds));
-        })
-        ->latest()->take(8)->get();
+    public function show(Product $product)
+    {
+        $related = \App\Models\Product::query()
+            ->where('is_active', true)
+            ->where('id', '!=', $product->id)
+            ->when($product->categories()->exists(), function ($q) use ($product) {
+                $catIds = $product->categories->pluck('id');
+                $q->whereHas('categories', fn($cq) => $cq->whereIn('categories.id', $catIds));
+            })
+            ->latest()->take(8)->get();
 
-    // Charger avis + état favoris
-    $reviews = $product->reviews()->latest()->get();
-    $isFavorite = false;
-    if (Auth::check()) {
-        $isFavorite = Favorite::where('user_id', Auth::id())
-            ->where('product_id', $product->id)
-            ->exists();
+        // Charger avis + état favoris
+        $reviews = $product->reviews()->latest()->get();
+        $isFavorite = false;
+        if (Auth::check()) {
+            $isFavorite = Favorite::where('user_id', Auth::id())
+                ->where('product_id', $product->id)
+                ->exists();
+        }
+
+        return view('products.detail', compact('product', 'related', 'reviews', 'isFavorite'));
     }
 
-    return view('products.detail', compact('product', 'related', 'reviews', 'isFavorite'));
-}
 
+    public function toggleFavorite(Product $product)
+    {
+        $fav = Favorite::where('user_id', Auth::id())
+            ->where('product_id', $product->id);
 
-public function toggleFavorite(Product $product)
-{
-    $fav = Favorite::where('user_id', Auth::id())
-                   ->where('product_id', $product->id);
-
-    if ($fav->exists()) {
-        $fav->delete();
-        return back()->with('success','Retiré des favoris ❌');
-    } else {
-        Favorite::create([
-            'user_id'    => Auth::id(),
-            'product_id' => $product->id,
-        ]);
-        return back()->with('success','Ajouté aux favoris ❤️');
+        if ($fav->exists()) {
+            $fav->delete();
+            return back()->with('success', 'Retiré des favoris ❌');
+        } else {
+            Favorite::create([
+                'user_id'    => Auth::id(),
+                'product_id' => $product->id,
+            ]);
+            return back()->with('success', 'Ajouté aux favoris ❤️');
+        }
     }
-}
 
 
     public function store(\Illuminate\Http\Request $r)
@@ -159,14 +159,14 @@ public function toggleFavorite(Product $product)
         $data['stock']    = $data['stock'] ?? 0;
 
         // Construire images[]
-        $imageUrls = $data['images'] ?? [];
+        $imagePaths = $data['images'] ?? [];
         if ($r->hasFile('files')) {
             foreach ($r->file('files') as $file) {
                 $path = $file->store('products', 'public');
                 $imageUrls[] = asset('storage/' . $path);
             }
         }
-        $data['images'] = $imageUrls;
+        $data['images'] = array_values(array_unique($imagePaths));
 
         // On enlève les champs qui ne sont pas en colonne de products
         unset($data['category_id'], $data['category_ids']);
@@ -187,51 +187,82 @@ public function toggleFavorite(Product $product)
         return response()->json($p->load('categories'), 201);
     }
 
-    public function update(\Illuminate\Http\Request $r, \App\Models\Product $product)
-    {
-        $data = $r->validate([
-            'name'        => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-            'price'       => 'sometimes|numeric|min:0',
-            'currency'    => 'sometimes|string|max:10',
-            'stock'       => 'sometimes|integer|min:0',
-            'is_active'   => 'boolean',
 
-            'images'      => 'nullable|array',
-            'images.*'    => 'url',
-            'files'       => 'nullable|array',
-            'files.*'     => 'image|mimes:jpg,jpeg,png,webp|max:3072',
+public function update(\Illuminate\Http\Request $r, \App\Models\Product $product)
+{
+    $data = $r->validate([
+        'name'         => 'sometimes|string|max:255',
+        'description'  => 'nullable|string',
+        'price'        => 'sometimes|numeric|min:0',
+        'currency'     => 'sometimes|string|max:10',
+        'stock'        => 'sometimes|integer|min:0',
+        'is_active'    => 'boolean',
 
-            'category_id'   => 'nullable|exists:categories,id',
-            'category_ids'  => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
-        ]);
+        // ✅ accepte URL absolue OU chemin relatif
+        'images'       => 'nullable|array',
+        'images.*'     => 'string',
 
-        // merge images uploadées
-        $imageUrls = $data['images'] ?? $product->images ?? [];
-        if ($r->hasFile('files')) {
-            foreach ($r->file('files') as $file) {
-                $path = $file->store('products', 'public');
-                $imageUrls[] = asset('storage/' . $path);
-            }
+        'files'        => 'nullable|array',
+        'files.*'      => 'image|mimes:jpg,jpeg,png,webp|max:3072',
+
+        'category_id'   => 'nullable|exists:categories,id',
+        'category_ids'  => 'nullable|array',
+        'category_ids.*'=> 'exists:categories,id',
+    ]);
+
+    // --- Normalisation & merge images ---------------------------------------
+    $normalize = function (string $v): string {
+        $v = trim($v);
+        if (\Illuminate\Support\Str::startsWith($v, ['http://','https://','data:'])) {
+            return $v; // URL absolue -> on garde
         }
-        if (isset($data['images']) || $r->hasFile('files')) {
-            $data['images'] = array_values(array_unique($imageUrls));
+        if (\Illuminate\Support\Str::startsWith($v, ['storage/'])) {
+            $v = \Illuminate\Support\Str::after($v, 'storage/'); // "storage/products/x.jpg" -> "products/x.jpg"
         }
+        return ltrim($v, '/'); // "products/x.jpg"
+    };
 
-        unset($data['category_id'], $data['category_ids']);
+    // base = images actuelles du produit
+    $current = is_array($product->images)
+        ? $product->images
+        : (json_decode($product->images ?? '[]', true) ?: []);
+    $images = array_map($normalize, $current);
 
-        $product->update($data);
-
-        // sync pivot si fourni
-        if ($r->filled('category_ids')) {
-            $product->categories()->sync(array_values(array_unique($r->input('category_ids'))));
-        } elseif ($r->filled('category_id')) {
-            $product->categories()->sync([(int) $r->input('category_id')]);
+    // + images envoyées par le client (URLs absolues ou chemins)
+    foreach ((array)($data['images'] ?? []) as $val) {
+        if (is_string($val) && $val !== '') {
+            $images[] = $normalize($val);
         }
-
-        return $product->load('categories');
     }
+
+    // + fichiers uploadés (on stocke le CHEMIN retourné par store)
+    if ($r->hasFile('files')) {
+        foreach ($r->file('files') as $file) {
+            $path = $file->store('products', 'public'); // ex: "products/abc.jpg"
+            $images[] = $path;
+        }
+    }
+
+    // dédup + réindexage
+    if ($r->filled('images') || $r->hasFile('files')) {
+        $data['images'] = array_values(array_unique($images));
+    }
+
+    // champs non-colonnes
+    unset($data['category_id'], $data['category_ids']);
+
+    // update produit
+    $product->update($data);
+
+    // sync pivot si fourni
+    if ($r->filled('category_ids')) {
+        $product->categories()->sync(array_values(array_unique($r->input('category_ids'))));
+    } elseif ($r->filled('category_id')) {
+        $product->categories()->sync([(int) $r->input('category_id')]);
+    }
+
+    return $product->load('categories');
+}
 
     // NEW: enregistrement d’un avis
     public function storeReview(Request $r, Product $product)
@@ -249,6 +280,37 @@ public function toggleFavorite(Product $product)
         return back()->with('success', 'Avis ajouté avec succès ✅');
     }
 
+
+ public function storeFromDashboard(Request $request)
+{
+    $data = $request->validate([
+        'name'        => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'price'       => 'required|numeric|min:0',
+        'stock'       => 'nullable|integer|min:0',
+        'category_id' => 'required|exists:categories,id',
+        'files'       => 'nullable|array',
+        'files.*'     => 'image|mimes:jpg,jpeg,png,webp|max:3072',
+    ]);
+
+    $data['currency'] = 'EUR';
+    $data['stock'] = $data['stock'] ?? 0;
+    $data['is_active'] = true;
+
+    $imageUrls = [];
+    if ($request->hasFile('files')) {
+        foreach ($request->file('files') as $file) {
+            $path = $file->store('products', 'public');      // products/xxx.jpg
+            $imageUrls[] = asset('storage/'.$path);          // URL publique
+        }
+    }
+    $data['images'] = $imageUrls;
+
+    $product = \App\Models\Product::create($data);
+    $product->categories()->sync([$request->integer('category_id')]);
+
+    return back()->with('success', 'Produit ajouté avec succès ✅');
+}
 
 
 

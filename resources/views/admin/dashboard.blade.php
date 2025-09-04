@@ -646,7 +646,7 @@
   <button class="mobile-toggle" id="toggleSidebar">
     <i class="fa-solid fa-grid-2"></i> Menu
 
-    
+
   </button>
 
   <div class="app">
@@ -661,11 +661,21 @@
       </div>
 
       <nav class="side-nav d-grid gap-1">
-        <a class="active" href="#dash"><i class="fa-solid fa-gauge-high"></i> Tableau de bord</a>
-        <a href="#products"><i class="fa-solid fa-box-open"></i> Produits</a>
-        <a href="#orders"><i class="fa-solid fa-bag-shopping"></i> Commandes</a>
-        <a href="#users"><i class="fa-solid fa-users"></i> Utilisateurs</a>
-        <a href="#analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+        <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+          <i class="fa-solid fa-gauge-high"></i> Tableau de bord
+        </a>
+        <a class="{{ request()->routeIs('admin.products.*') ? 'active' : '' }}" href="{{ route('admin.products.index') }}">
+          <i class="fa-solid fa-box-open"></i> Produits
+        </a>
+        <a class="{{ request()->routeIs('admin.orders') ? 'active' : '' }}" href="{{ route('admin.orders') }}">
+          <i class="fa-solid fa-bag-shopping"></i> Commandes
+        </a>
+        <a class="{{ request()->routeIs('admin.users') ? 'active' : '' }}" href="{{ route('admin.users') }}">
+          <i class="fa-solid fa-users"></i> Utilisateurs
+        </a>
+        <a class="{{ request()->routeIs('admin.analytics') ? 'active' : '' }}" href="{{ route('admin.analytics') }}">
+          <i class="fa-solid fa-chart-line"></i> Analytics
+        </a>
       </nav>
 
       <div class="side-bottom">
@@ -702,32 +712,50 @@
             <div class="icon"><i class="fa-solid fa-euro-sign"></i></div>
             <span class="badge-soft">Mois</span>
           </div>
-          <div class="val" id="kpiRevenue">—</div>
+          <div class="val">{{ number_format($revenue, 2, ',', ' ') }} €</div>
           <div class="lbl">Chiffre d’affaires</div>
+          @if(isset($salesData['yearly_stats'][0]))
+          <div class="mt-1 small text-muted">
+            {{ number_format($salesData['yearly_stats'][0]->total_sales ?? 0, 0, ',', ' ') }} € sur l'année
+          </div>
+          @endif
         </div>
         <div class="cardx kpi">
           <div class="d-flex align-items-center justify-content-between">
             <div class="icon"><i class="fa-solid fa-bag-shopping"></i></div>
             <span class="badge-soft">Total</span>
           </div>
-          <div class="val" id="kpiOrders">—</div>
+          <div class="val">{{ number_format($totalOrders, 0, ',', ' ') }}</div>
           <div class="lbl">Commandes</div>
+          @if(isset($salesData['yearly_stats'][0]))
+          <div class="mt-1 small text-muted">
+            {{ number_format($salesData['yearly_stats']->sum('orders_count'), 0, ',', ' ') }} commandes cette année
+          </div>
+          @endif
         </div>
         <div class="cardx kpi">
           <div class="d-flex align-items-center justify-content-between">
             <div class="icon"><i class="fa-solid fa-user-group"></i></div>
             <span class="badge-soft">Clients</span>
           </div>
-          <div class="val" id="kpiUsers">—</div>
+          <div class="val">{{ number_format($totalUsers, 0, ',', ' ') }}</div>
           <div class="lbl">Utilisateurs</div>
+          <div class="mt-1 small">
+            <span class="text-success">{{ $userRoles['admin'] ?? 0 }} admin</span> • 
+            <span class="text-info">{{ $userRoles['vendeur'] ?? 0 }} vendeurs</span> • 
+            <span class="text-muted">{{ $userRoles['client'] ?? 0 }} clients</span>
+          </div>
         </div>
         <div class="cardx kpi">
           <div class="d-flex align-items-center justify-content-between">
             <div class="icon"><i class="fa-solid fa-boxes-stacked"></i></div>
             <span class="badge-soft">Actifs</span>
           </div>
-          <div class="val" id="kpiProducts">—</div>
+          <div class="val">{{ number_format($activeProducts, 0, ',', ' ') }}</div>
           <div class="lbl">Produits en catalogue</div>
+          <div class="mt-1 small text-{{ $lowStockProducts->isNotEmpty() ? 'danger' : 'success' }}">
+            {{ $lowStockProducts->count() }} produit(s) en stock faible
+          </div>
         </div>
       </section>
 
@@ -735,19 +763,41 @@
       <section class="grid" style="grid-template-columns: 1.5fr 1fr">
         <div class="cardx">
           <div class="hd">
-            <h5 class="m-0">Ventes par mois</h5>
+            <h5 class="m-0">Ventes mensuelles</h5>
             <div class="d-flex gap-2">
-              <button class="btn-outline btn-sm" id="btnLine">Courbe</button>
-              <button class="btn-outline btn-sm" id="btnBar">Barres</button>
+              <button class="btn-outline btn-sm active" id="btnRevenue">Chiffre d'affaires</button>
+              <button class="btn-outline btn-sm" id="btnOrders">Nombre de commandes</button>
             </div>
           </div>
-          <canvas id="chartSales" height="110"></canvas>
+          <div class="position-relative" style="height: 300px;">
+            <canvas id="chartSales"></canvas>
+          </div>
+          <div class="px-3 py-2 border-top">
+            <div class="d-flex justify-content-between small text-muted">
+              <span>Total annuel: {{ number_format(collect($salesData['yearly_stats'] ?? [])->sum('total_sales'), 0, ',', ' ') }} €</span>
+              <span>{{ count($salesData['orders_count'] ?? []) ? number_format(array_sum($salesData['orders_count']), 0, ',', ' ') . ' commandes' : '' }}</span>
+            </div>
+          </div>
         </div>
         <div class="cardx">
           <div class="hd">
-            <h5 class="m-0">Top produits (quantités)</h5>
+            <h5 class="m-0">Top produits</h5>
+            <div class="d-flex gap-2">
+              <button class="btn-outline btn-sm active" id="btnTopQty">Par quantité</button>
+              <button class="btn-outline btn-sm" id="btnTopRevenue">Par CA</button>
+            </div>
           </div>
-          <canvas id="chartTopProducts" height="110"></canvas>
+          <div class="position-relative" style="height: 300px;">
+            <canvas id="chartTopProducts"></canvas>
+          </div>
+          @if(count($topProducts ?? []) > 0)
+          <div class="px-3 py-2 border-top small">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Meilleur vendeur:</span>
+              <span class="fw-medium">{{ $topProducts[0]->name }} ({{ $topProducts[0]->total_quantity }} unités)</span>
+            </div>
+          </div>
+          @endif
         </div>
       </section>
 
@@ -763,12 +813,14 @@
             <h5 class="m-0">Stocks faibles</h5>
           </div>
           <ul class="list-clean" id="lowStock">
-            <li>
-              <span class="skeleton" style="width: 55%"></span><span class="skeleton" style="width: 60px"></span>
+            @forelse($lowStockProducts as $product)
+            <li class="d-flex justify-content-between align-items-center py-2">
+              <span>{{ $product->name }}</span>
+              <span class="badge bg-{{ $product->stock < 5 ? 'danger' : 'warning' }}">{{ $product->stock }} restant(s)</span>
             </li>
-            <li>
-              <span class="skeleton" style="width: 40%"></span><span class="skeleton" style="width: 60px"></span>
-            </li>
+            @empty
+            <li class="text-muted">Aucun produit en stock faible</li>
+            @endforelse
           </ul>
         </div>
       </section>
@@ -779,56 +831,124 @@
           <div class="hd">
             <h5 class="m-0">Créer un produit</h5>
           </div>
-          <form id="create-product" class="row g-3" enctype="multipart/form-data">
-           
-            <div class="col-md-6">
-              <label class="form-label">Nom</label>
-              <input class="form-control" name="name" placeholder="Ex: Canapé Oslo" required />
-            </div>
+                          @if(session('success'))
+                  <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+                @if($errors->any())
+                  <div class="alert alert-danger">
+                    <ul style="margin:0;padding-left:1rem">
+                      @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+                    </ul>
+                  </div>
+                @endif
 
-            
-            <div class="col-md-6">
-                <label class="form-label">Catégorie</label>
-                <select class="form-select" name="category_id" id="categorySelect" required>
-                  <option value="">Sélectionner…</option>
-                </select>
-              </div>
-            <div class="col-md-3">
-              <label class="form-label">Prix (EUR)</label>
-              <input class="form-control" name="price" type="number" step="0.01" required />
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Stock</label>
-              <input class="form-control" name="stock" type="number" min="0" value="0" />
-            </div>
+                                      <form method="POST"
+                                            action="{{ route('admin.products.store') }}"
+                                            enctype="multipart/form-data"
+                                            class="row g-3">
+                                        @csrf
 
-            <div class="col-12">
-              <label class="form-label">Description</label>
-              <textarea class="form-control" name="description" rows="3" placeholder="Courte description…"></textarea>
+                                        <div class="col-md-6">
+                                          <label class="form-label">Nom</label>
+                                          <input class="form-control" name="name" placeholder="Ex: Canapé Oslo" required />
+                                        </div>
 
-            </div>
-            <!-- A) URL d’images -->
-            <!--  <div class="col-12">
-              <label class="form-label">Images (URLs)</label>
-              <div id="image-urls">
-                <input class="form-control mb-2" name="images[]" placeholder="https://…/image1.jpg">
-              </div>
-              <button type="button" class="btn-outline" id="add-image-url">+ Ajouter une URL</button>
-              <div id="preview-urls" class="d-flex gap-2 mt-2 flex-wrap"></div>
-            </div>-->
+                                        <div class="col-md-6">
+                                          <label class="form-label">Catégorie</label>
+                                          <select class="form-select" name="category_id" required>
+                                            <option value="">Sélectionner…</option>
+                                            @php
+                                              $render = function($cats, $prefix = '') use (&$render) {
+                                                foreach ($cats as $c) {
+                                                  echo '<option value="'.$c->id.'">'.$prefix.e($c->name).'</option>';
+                                                  if ($c->children && $c->children->isNotEmpty()) {
+                                                    $render($c->children, $prefix.'— ');
+                                                  }
+                                                }
+                                              };
+                                            @endphp
+                                            {!! $render($categories) !!}
+                                          </select>
+                                        </div>
 
-            <!-- B) Upload fichiers -->
-            <div class="col-12">
-              <label class="form-label">Ajouter votre image</label>
-              <input class="form-control" type="file" name="files[]" id="files" multiple accept="image/*">
-              <div id="preview-files" class="d-flex gap-2 mt-2 flex-wrap"></div>
-            </div>
+                                        <div class="col-md-3">
+                                          <label class="form-label">Prix (EUR)</label>
+                                          <input class="form-control" name="price" type="number" step="0.01" required />
+                                        </div>
 
-            <div class="col-12 d-flex gap-2">
-              <button type="submit" class="btn-brand">Créer</button>
-              <button type="reset" class="btn-outline">Réinitialiser</button>
-            </div>
-          </form>
+                                        <div class="col-md-3">
+                                          <label class="form-label">Stock</label>
+                                          <input class="form-control" name="stock" type="number" min="0" value="0" />
+                                        </div>
+
+                                        <div class="col-12">
+                                          <label class="form-label">Description</label>
+                                          <textarea class="form-control" name="description" rows="3" placeholder="Courte description…"></textarea>
+                                        </div>
+
+                                        <div class="col-12">
+                                          <label class="form-label">Images</label>
+                                          <input class="form-control" type="file" name="files[]" id="files" multiple accept="image/*">
+                                          <div id="preview-files" class="d-flex gap-2 mt-2 flex-wrap"></div>
+                                        </div>
+
+                                        <div class="col-12">
+                                          <label class="form-label">Couleurs disponibles</label>
+                                          <div class="row">
+                                            @php
+                                              $colors = \App\Models\Color::all();
+                                            @endphp
+                                            @foreach($colors as $color)
+                                            <div class="col-md-3 mb-2">
+                                              <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="color-{{ $color->id }}" 
+                                                       name="colors[]" 
+                                                       value="{{ $color->id }}">
+                                                <label class="form-check-label d-flex align-items-center" for="color-{{ $color->id }}">
+                                                  <span class="color-preview me-2" 
+                                                        style="display:inline-block; width:20px; height:20px; background-color:{{ $color->code }}; border:1px solid #ddd; border-radius:3px;"></span>
+                                                  {{ $color->name }}
+                                                </label>
+                                              </div>
+                                            </div>
+                                            @endforeach
+                                          </div>
+                                        </div>
+
+                                        {{-- Champs cachés --}}
+                                        <input type="hidden" name="currency" value="EUR">
+                                        <input type="hidden" name="is_active" value="1">
+
+                                        <div class="col-12 d-flex gap-2">
+                                          <button type="submit" class="btn-brand">Créer</button>
+                                          <button type="reset" class="btn-outline">Réinitialiser</button>
+                                        </div>
+                                      </form>
+
+                                            <script>
+                                              // Preview (optionnel)
+                                              const input = document.getElementById('files');
+                                              const preview = document.getElementById('preview-files');
+                                              if (input && preview) {
+                                                input.addEventListener('change', () => {
+                                                  preview.innerHTML = '';
+                                                  [...input.files].forEach(file => {
+                                                    const r = new FileReader();
+                                                    r.onload = e => {
+                                                      const img = document.createElement('img');
+                                                      img.src = e.target.result;
+                                                      img.style.width='80px'; img.style.height='80px';
+                                                      img.style.objectFit='cover'; img.style.borderRadius='8px';
+                                                      preview.appendChild(img);
+                                                    };
+                                                    r.readAsDataURL(file);
+                                                  });
+                                                });
+                                              }
+                                            </script>
+
+
         </div>
 
         <div class="cardx">
@@ -836,7 +956,15 @@
             <h5 class="m-0">Produits populaires</h5>
           </div>
           <ol id="topList" class="list-clean" style="counter-reset: rank; padding-left: 0">
-            <!-- rempli dynamiquement -->
+            @forelse($topProducts as $product)
+            <li style="display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1)">
+              <span style="font-weight: 800; color: var(--brand)">{{ $loop->iteration }}.</span>
+              <span style="flex: 1">{{ $product->name }}</span>
+              <span class="badge bg-secondary">{{ $product->total_quantity }} vendus</span>
+            </li>
+            @empty
+            <li class="text-muted">Aucune donnée de vente disponible</li>
+            @endforelse
           </ol>
         </div>
       </section>
@@ -844,33 +972,78 @@
       <!-- Recent Orders -->
       <section id="orders" class="cardx">
         <div class="hd">
-          <h5 class="m-0">Commandes récentes</h5>
+          <h5 class="m-0">Dernières commandes</h5>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-dark">{{ $recentOrders->count() }} commandes</span>
+            <a href="#" class="btn-ghost btn-sm">Voir tout</a>
+          </div>
         </div>
         <div class="table-responsive">
-          <table class="tablex" id="ordersTable">
+          <table class="tablex">
             <thead>
               <tr>
                 <th>#</th>
                 <th>Client</th>
-                <th>Total</th>
+                <th class="text-end">Montant</th>
+                <th>Articles</th>
                 <th>Statut</th>
                 <th>Date</th>
               </tr>
             </thead>
             <tbody>
+              @forelse($recentOrders as $order)
               <tr>
-                <td colspan="5">
-                  <div class="skeleton" style="height: 16px"></div>
+                <td>#{{ $order->id }}</td>
+                <td>
+                  <div class="d-flex flex-column">
+                    <span class="fw-medium">{{ $order->user->name ?? 'Client supprimé' }}</span>
+                    <small class="text-muted">{{ $order->user->email ?? '' }}</small>
+                  </div>
+                </td>
+                <td class="text-end fw-medium">{{ number_format($order->total, 2, ',', ' ') }} €</td>
+                <td class="text-center">
+                  <span class="badge bg-light text-dark">
+                    {{ $order->items->count() }} {{ Str::plural('article', $order->items->count()) }}
+                  </span>
+                </td>
+                <td>
+                  @php
+                    $statusClass = [
+                        'pending' => 'bg-warning',
+                        'processing' => 'bg-info',
+                        'completed' => 'bg-success',
+                        'cancelled' => 'bg-danger'
+                    ][$order->status] ?? 'bg-secondary';
+                  @endphp
+                  <span class="badge {{ $statusClass }}">
+                    {{ ucfirst(__('orders.status.' . $order->status)) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex flex-column">
+                    <span>{{ $order->created_at->format('d/m/Y') }}</span>
+                    <small class="text-muted">{{ $order->created_at->format('H:i') }}</small>
+                  </div>
                 </td>
               </tr>
+              @empty
               <tr>
-                <td colspan="5">
-                  <div class="skeleton" style="height: 16px"></div>
+                <td colspan="6" class="text-center py-4">
+                  <i class="fa-solid fa-inbox me-2"></i>
+                  Aucune commande récente
                 </td>
               </tr>
+              @endforelse
             </tbody>
           </table>
         </div>
+        @if(method_exists($recentOrders, 'hasMorePages') && $recentOrders->hasMorePages())
+        <div class="px-3 py-2 border-top text-end">
+          <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-link">
+            Voir toutes les commandes <i class="fa-solid fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+        @endif
       </section>
 
       <!-- Users -->
@@ -879,9 +1052,11 @@
           <h5 class="m-0">Utilisateurs (aperçu)</h5>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-          <span class="chip">Admins: <b id="countAdmins">—</b></span>
-          <span class="chip">Pros: <b id="countPros">—</b></span>
-          <span class="chip">Clients: <b id="countUsers">—</b></span>
+          <span class="chip">Admins: <b>{{ $userRoles['admin'] ?? 0 }}</b></span>
+        
+        
+          <span class="chip">Pros: <b>{{ $userRoles['pro'] ?? 0 }}</b></span>
+          <span class="chip">Clients: <b>{{ $userRoles['user'] ?? 0 }}</b></span>
         </div>
       </section>
     </main>
@@ -1142,7 +1317,7 @@
         fillOrdersTable(recentOrders);
 
         // Charts avec données d'exemple
-        buildSalesChart("line", 
+        buildSalesChart("line",
           ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû"],
           [5000, 8000, 12000, 15000, 18000, 20000, 22000, 25000]
         );
@@ -1234,8 +1409,8 @@
     });
 
     // Create product
-    
-  
+
+
     // Manual refresh
     document
       .getElementById("refreshBtn")
@@ -1262,7 +1437,7 @@ document.addEventListener('DOMContentLoaded', () => {
   (function loadCategories(){
     @if(isset($categories))
       const categories = @json($categories);
-      
+
       categories.forEach(root => {
         if (root.children && root.children.length) {
           const og = document.createElement('optgroup');
@@ -1304,11 +1479,11 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(form);
-    
+
     // Simulation de création de produit
     const productName = formData.get('name');
     const productPrice = formData.get('price');
-    
+
     if (productName && productPrice) {
       alert(`Produit "${productName}" créé avec succès ! (Prix: ${productPrice}€)`);
       form.reset();
@@ -1319,9 +1494,331 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Veuillez remplir tous les champs obligatoires.');
     }
   });
+
+  // Initialisation des graphiques
+  document.addEventListener('DOMContentLoaded', function() {
+    // Données pour les graphiques
+    const salesData = {
+        labels: @json($salesData['labels'] ?? []),
+        datasets: [
+            {
+                label: 'Chiffre d\'affaires (€)',
+                data: @json($salesData['data'] ?? []),
+                borderColor: '#6ea8fe',
+                backgroundColor: 'rgba(110, 168, 254, 0.1)',
+                tension: 0.3,
+                fill: true,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Nombre de commandes',
+                data: @json($salesData['orders_count'] ?? []),
+                borderColor: '#22d3ee',
+                backgroundColor: 'rgba(34, 211, 238, 0.1)',
+                borderDash: [5, 5],
+                tension: 0.3,
+                yAxisID: 'y1',
+                type: 'line'
+            }
+        ]
+    };
+
+    const topProductsQtyData = {
+        labels: @json($topProducts ? $topProducts->pluck('name') : []),
+        datasets: [{
+            label: 'Quantités vendues',
+            data: @json($topProducts ? $topProducts->pluck('total_quantity') : []),
+            backgroundColor: [
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+            ],
+            borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const topProductsRevenueData = {
+        labels: @json($topProducts ? $topProducts->pluck('name') : []),
+        datasets: [{
+            label: 'Chiffre d\'affaires (€)',
+            data: @json($topProducts ? $topProducts->pluck('total_revenue') : []),
+            backgroundColor: [
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+            ],
+            borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const userRolesData = {
+        labels: @json($userRoles ? array_map(function($role) {
+            return ucfirst($role) . 's';
+        }, array_keys($userRoles)) : []),
+        datasets: [{
+            data: @json($userRoles ? array_values($userRoles) : []),
+            backgroundColor: [
+                'rgba(110, 168, 254, 0.8)',
+                'rgba(34, 211, 238, 0.8)',
+                'rgba(22, 200, 100, 0.8)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    // Initialisation des graphiques
+    let salesChart, topProductsChart;
+
+    if (document.getElementById('chartSales')) {
+        const salesCtx = document.getElementById('chartSales').getContext('2d');
+        salesChart = new Chart(salesCtx, {
+            type: 'line',
+            data: salesData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (context.datasetIndex === 0) {
+                                        label += new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                                    } else {
+                                        label += context.parsed.y + ' commande' + (context.parsed.y > 1 ? 's' : '');
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: { 
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Chiffre d\'affaires (€)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Nombre de commandes'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Bascule entre CA et nombre de commandes
+        document.getElementById('btnRevenue')?.addEventListener('click', function() {
+            salesChart.data.datasets[0].hidden = false;
+            salesChart.data.datasets[1].hidden = true;
+            salesChart.update();
+            this.classList.add('active');
+            document.getElementById('btnOrders')?.classList.remove('active');
+        });
+
+        document.getElementById('btnOrders')?.addEventListener('click', function() {
+            salesChart.data.datasets[0].hidden = true;
+            salesChart.data.datasets[1].hidden = false;
+            salesChart.update();
+            this.classList.add('active');
+            document.getElementById('btnRevenue')?.classList.remove('active');
+        });
+    }
+
+    // Graphique des produits les plus vendus
+    if (document.getElementById('chartTopProducts')) {
+        const topProductsCtx = document.getElementById('chartTopProducts').getContext('2d');
+        topProductsChart = new Chart(topProductsCtx, {
+            type: 'bar',
+            data: topProductsQtyData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                const label = tooltipItem.dataset.label || '';
+                                const value = tooltipItem.raw;
+                                
+                                if (label.includes('Quantités')) {
+                                    return `${label}: ${value} unité${value > 1 ? 's' : ''}`;
+                                } else if (label.includes('CA')) {
+                                    return `${label}: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value)}`;
+                                }
+                                return `${label}: ${value}`;
+                            }
+                        }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Quantités vendues'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Bascule entre quantités et CA pour les produits
+        document.getElementById('btnTopQty')?.addEventListener('click', function() {
+            topProductsChart.data = topProductsQtyData;
+            topProductsChart.options.scales.y.title.text = 'Quantités vendues';
+            topProductsChart.update();
+            this.classList.add('active');
+            document.getElementById('btnTopRevenue')?.classList.remove('active');
+        });
+
+        document.getElementById('btnTopRevenue')?.addEventListener('click', function() {
+            topProductsChart.data = topProductsRevenueData;
+            topProductsChart.options.scales.y.title.text = 'Chiffre d\'affaires (€)';
+            topProductsChart.update();
+            this.classList.add('active');
+            document.getElementById('btnTopQty')?.classList.remove('active');
+        });
+    }
+
+    // Graphique de la répartition des rôles
+    if (document.getElementById('usersPie')) {
+        const usersPieCtx = document.getElementById('usersPie').getContext('2d');
+        new Chart(usersPieCtx, {
+            type: 'doughnut',
+            data: userRolesData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { 
+                        position: 'right',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} utilisateur${value > 1 ? 's' : ''} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Mise à jour des KPI
+    const formatNumber = (num) => {
+        return new Intl.NumberFormat('fr-FR').format(num);
+    };
+
+    // Mettre à jour les valeurs des KPI
+    const updateKPI = (id, value, isCurrency = false) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = isCurrency 
+                ? `${formatNumber(parseFloat(value).toFixed(2))} €`
+                : formatNumber(value);
+        }
+    };
+
+    // Mettre à jour les KPI avec les données du contrôleur
+    updateKPI('kpiRevenue', {{ $revenue ?? 0 }}, true);
+    updateKPI('kpiOrders', {{ $totalOrders ?? 0 }});
+    updateKPI('kpiUsers', {{ $totalUsers ?? 0 }});
+    updateKPI('kpiProducts', {{ $activeProducts ?? 0 }});
+
+    // Rafraîchir la page
+    document.getElementById('refreshBtn')?.addEventListener('click', function() {
+        window.location.reload();
+    });
+
+    // Gestion du thème sombre/clair
+    const themeBtn = document.getElementById('themeBtn');
+    const html = document.documentElement;
+
+    // Vérifier le thème stocké dans localStorage
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    if (currentTheme === 'dark') {
+        html.setAttribute('data-theme', 'dark');
+        themeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+    } else {
+        html.setAttribute('data-theme', 'light');
+        themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+    }
+
+    themeBtn?.addEventListener('click', function() {
+        if (html.getAttribute('data-theme') === 'dark') {
+            html.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            this.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            this.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        }
+    });
+  });
 });
 </script>
-
 
 </body>
 

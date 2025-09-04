@@ -25,12 +25,12 @@
         <a href="{{ route('home') }}" style="display: inline-block">
             <div class="logo-wrapper"
                 style="
-        background-image: url('{{ asset('assets/IMG.png') }}');
-        background-size: contain;
-        background-repeat: no-repeat;
-        width: 250px;
-        height: 80px;
-        flex-shrink: 0;">
+                    background-image: url('{{ asset('assets/IMG.png') }}');
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                    width: 250px;
+                    height: 80px;
+                    flex-shrink: 0;">
             </div>
         </a>
 
@@ -380,35 +380,35 @@
                 <!-- Modal Structure -->
                 <div id="dropdownCountry" class="modal"
                     style="
-                display: none;
-                position: fixed;
-                z-index: 1000;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.5);
-                overflow: auto;
-              ">
+                            display: none;
+                            position: fixed;
+                            z-index: 1000;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                            height: 100%;
+                            background-color: rgba(0, 0, 0, 0.5);
+                            overflow: auto;
+                        ">
                     <div class="modal-content"
                         style="
-                  background: white;
-                  margin: 5% auto;
-                  padding: 25px;
-                  width: 500px;
-                  max-height: 80vh;
-                  overflow-y: auto;
-                  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
-                  border-radius: 12px;
-                ">
+                        background: white;
+                        margin: 5% auto;
+                        padding: 25px;
+                        width: 500px;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+                        border-radius: 12px;
+                        ">
                         <form id="regionForm">
                             <span class="close"
                                 style="
-                      float: right;
-                      font-size: 28px;
-                      cursor: pointer;
-                      margin-top: -10px;
-                    ">&times;</span>
+                                float: right;
+                                font-size: 28px;
+                                cursor: pointer;
+                                margin-top: -10px;
+                                ">&times;</span>
 
                             <h2 style="margin-top: 0; color: #333; font-size: 24px" data-i18n="regional_settings">
                                 Paramètres régionaux
@@ -424,19 +424,19 @@
                             <div style="margin-bottom: 20px">
                                 <label
                                     style="
-                        display: block;
-                        margin-bottom: 8px;
-                        font-weight: 600;
-                      "
+                                        display: block;
+                                        margin-bottom: 8px;
+                                        font-weight: 600;
+                                    "
                                     data-i18n="currency_label">Devise</label>
                                 <select name="currency" id="currency"
                                     style="
-                        width: 100%;
-                        padding: 10px;
-                        border: 1px solid #ddd;
-                        border-radius: 6px;
-                        font-size: 16px;
-                      ">
+                                            width: 100%;
+                                            padding: 10px;
+                                            border: 1px solid #ddd;
+                                            border-radius: 6px;
+                                            font-size: 16px;
+                                        ">
                                     <option value="EUR">Euro (€)</option>
                                     <option value="USD">Dollar US ($)</option>
                                     <option value="GBP">Livre sterling (£)</option>
@@ -1245,7 +1245,7 @@
                     @auth
                         <a class="mobile-only" href="{{ route('profile') }}" style="...">
                             <!--  <i class="fas fa-user" style="font-size: 14px"></i>
-                                    <span>{{ Auth::user()->name }} — {{ Auth::user()->role }}</span> -->
+                                        <span>{{ Auth::user()->name }} — {{ Auth::user()->role }}</span> -->
                         </a>
                     @else
                         <a class="auth-link mobile-only" href="{{ route('login') }}"
@@ -1284,7 +1284,7 @@
                   border: none;
                   cursor: pointer;
                   text-align: left;
-                ">
+                   ">
                         <span>
                             <i class="fas fa-question-circle" style="margin-right: 12px; color: #4a6bff"></i>
                             Aide & Contact
@@ -1310,7 +1310,7 @@
                   border: none;
                   cursor: pointer;
                   text-align: left;
-                ">
+                   ">
                         <span>
                             <i class="fas fa-globe" style="margin-right: 12px; color: #4a6bff"></i>
                             Paramètres régionaux
@@ -1375,7 +1375,6 @@
                             <span>S'inscrire</span>
                         </a>
                     @endauth
-
 
                 </div>
             </div>
@@ -1725,223 +1724,299 @@
 
 
 <script>
-    (function() {
-        const input = document.getElementById('searchInput');
-        const btn = document.getElementById('searchBtn');
-        const dd = document.getElementById('searchDropdown');
+  (function () {
+    const input = document.getElementById('searchInput');
+    const btn   = document.getElementById('searchBtn');
+    const dd    = document.getElementById('searchDropdown');
 
-        let cursor = -1; // index sélection clavier
-        let items = []; // cache items affichés
-        let lastQ = '';
-        const DEBOUNCE_MS = 180;
+    // === URLs Laravel ===
+    const SUGGEST_URL = '/search/suggest'; // JSON
+    const RESULTS_URL = '/search';         // Blade: /search?q=...
 
-        // util: debounce
-        const debounce = (fn, ms) => {
-            let t;
-            return (...args) => {
-                clearTimeout(t);
-                t = setTimeout(() => fn(...args), ms);
-            };
-        };
+    let cursor = -1;           // index sélection clavier
+    let items  = [];           // items produits
+    let lastQ  = '';
+    const DEBOUNCE_MS = 180;
 
-        // util: première image
-        const firstImage = (images) => {
-            if (!images) return '';
-            if (Array.isArray(images) && images[0]) return images[0];
-            if (typeof images === 'string') {
-                try {
-                    const arr = JSON.parse(images);
-                    if (Array.isArray(arr) && arr[0]) return arr[0];
-                } catch (e) {}
-            }
-            return '';
-        };
+    // Debounce util
+    const debounce = (fn, ms) => {
+      let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    };
 
-        // rendu dropdown
-        function render(q, data) {
-            items = data || [];
-            cursor = -1;
+    // Sécurité HTML
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
 
-            if (!q || !items.length) {
-                dd.innerHTML = q ? `
-      <div class="search-empty">Aucun résultat pour “${escapeHtml(q)}”.</div>` : '';
-                dd.style.display = q ? 'block' : 'none';
-                if (q) dd.innerHTML += footer(q, 0);
-                return;
-            }
+    // Pied du menu
+    function footer(q, count) {
+      return `
+        <div class="search-footer" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-top:1px solid #eee;background:#fafafa">
+          <span style="font-size:12px;color:#6b7280">${count} résultat${count>1?'s':''}</span>
+          <a href="${RESULTS_URL}?q=${encodeURIComponent(q)}" id="searchSeeAll" style="font-size:12px;color:#4a6bff;text-decoration:none">Voir tous les résultats pour “${escapeHtml(q)}”</a>
+        </div>`;
+    }
 
-            const html = [
-                ...items.map((p, i) => {
-                    const img = firstImage(p.images) || 'https://via.placeholder.com/80x80?text=—';
-                    const price = (p.price != null) ? `${Number(p.price).toFixed(2)} ${p.currency || ''}` :
-                        '';
-                    return `
-          <div class="search-item" data-index="${i}" data-id="${p.id}">
-            <img class="search-thumb" src="${img}" alt="">
-            <div>
-              <div class="search-title">${escapeHtml(p.name)}</div>
-              <div class="search-price">${escapeHtml(price)}</div>
+    // Navigation
+    function goToProductUrl(url) {
+      if (!url) return;
+      window.location.href = url; // l’API renvoie déjà l’URL correcte (route products.show)
+    }
+    function goToResults(q) {
+      window.location.href = `${RESULTS_URL}?q=${encodeURIComponent(q)}`;
+    }
+
+    // Rendu dropdown (produits + catégories)
+    function render(q, payload) {
+      const products   = Array.isArray(payload?.products) ? payload.products : [];
+      const categories = Array.isArray(payload?.categories) ? payload.categories : [];
+
+      // on garde les produits pour la navigation clavier
+      items  = products;
+      cursor = -1;
+
+      if (!q) {
+        dd.style.display = 'none';
+        dd.innerHTML = '';
+        return;
+      }
+
+      // Bloc catégories (optionnel)
+      const catHtml = categories.length ? `
+        <div class="search-section" style="padding:8px 0;border-bottom:1px solid #eee">
+          <div style="padding:8px 12px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Catégories</div>
+          ${categories.map(c => `
+            <a class="search-cat" href="${c.url}" style="display:flex;gap:10px;align-items:center;padding:10px 12px;text-decoration:none;color:#1f2937">
+              <i class="fas fa-folder" aria-hidden="true"></i>
+              <span>${escapeHtml(c.name)}</span>
+            </a>
+          `).join('')}
+        </div>
+      ` : '';
+
+      // Bloc produits
+      const prodHtml = products.length ? `
+        <div class="search-section">
+          <div style="padding:8px 12px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Produits</div>
+          ${products.map((p, i) => `
+            <div class="search-item" data-index="${i}" data-url="${p.url}"
+                style="display:flex;gap:10px;align-items:center;padding:10px 12px;cursor:pointer">
+              <img class="search-thumb" src="${p.img || 'https://via.placeholder.com/80x80?text=—'}" alt=""
+                   style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #eee" />
+              <div style="display:flex;flex-direction:column">
+                <div class="search-title" style="font-size:14px;color:#111827">${escapeHtml(p.name)}</div>
+                <div class="search-price" style="font-size:12px;color:#6b7280">${escapeHtml(p.price || '')}</div>
+              </div>
             </div>
-          </div>
-        `;
-                })
-            ].join('');
+          `).join('')}
+        </div>
+      ` : `
+        <div class="search-empty" style="padding:12px;font-size:14px;color:#6b7280">Aucun résultat pour “${escapeHtml(q)}”.</div>
+      `;
 
-            dd.innerHTML = html + footer(q, items.length);
-            dd.style.display = 'block';
+      dd.innerHTML = catHtml + prodHtml + footer(q, products.length + categories.length);
+      dd.style.display = 'block';
 
-            // Bind click
-            dd.querySelectorAll('.search-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const id = el.getAttribute('data-id');
-                    goToProduct(id);
-                });
-            });
-
-            // “Voir tous les résultats”
-            const allLink = dd.querySelector('#searchSeeAll');
-            if (allLink) allLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                goToResults(q);
-            });
-        }
-
-        //function footer(q, count) {
-        // return `
-        //  <div class="search-footer">
-        //   <span>${count} résultat${count>1?'s':''}</span>
-        //  <a href="#" id="searchSeeAll">Voir tous les résultats pour “${escapeHtml(q)}”</a>
-        // </div>
-        //`;
-        //}
-
-        // sécurité HTML
-        function escapeHtml(s) {
-            return String(s).replace(/[&<>"']/g, m => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            } [m]));
-        }
-
-        // navigation
-        function goToProduct(id) {
-            if (!id) return;
-            window.location.href = `product.html?id=${encodeURIComponent(id)}`;
-        }
-
-        function goToResults(q) {
-            // page résultats de ton choix
-            window.location.href = `recherche.html?q=${encodeURIComponent(q)}`;
-        }
-
-        // fetch suggestions
-        const doSearch = debounce(async (q) => {
-            q = q.trim();
-            lastQ = q;
-            if (!q) {
-                dd.style.display = 'none';
-                dd.innerHTML = '';
-                return;
-            }
-
-            try {
-                const res = await fetch(`${apiBase}/search?q=${encodeURIComponent(q)}`, {
-                    headers: {
-                        Accept: 'application/json'
-                    }
-                });
-                const data = await res.json();
-                // si l’utilisateur a déjà tapé autre chose, on ignore
-                if (q !== lastQ) return;
-                render(q, Array.isArray(data) ? data : []);
-            } catch (e) {
-                console.error(e);
-                render(q, []);
-            }
-        }, DEBOUNCE_MS);
-
-        // events
-        input.addEventListener('input', (e) => doSearch(e.target.value));
-        input.addEventListener('focus', () => {
-            if (input.value.trim()) doSearch(input.value);
+      // Click produit
+      dd.querySelectorAll('.search-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const url = el.getAttribute('data-url');
+          goToProductUrl(url);
         });
+      });
 
-        // bouton loupe = page résultats complète
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const q = input.value.trim();
-            if (!q) return;
-            goToResults(q);
-        });
+      // “Voir tous les résultats”
+      const allLink = dd.querySelector('#searchSeeAll');
+      if (allLink) allLink.addEventListener('click', (e) => {
+        // on laisse la navigation par <a>; si tu préfères JS-only, décommente :
+        // e.preventDefault(); goToResults(q);
+      });
+    }
 
-        // clavier: Entrée / Échap / ↑ / ↓
-        input.addEventListener('keydown', (e) => {
-            if (dd.style.display !== 'block') return;
-            const max = items.length - 1;
+    // Requête suggestions
+    const doSearch = debounce(async (q) => {
+      q = q.trim();
+      lastQ = q;
+      if (!q) {
+        dd.style.display = 'none';
+        dd.innerHTML = '';
+        return;
+      }
+      try {
+        const res = await fetch(`${SUGGEST_URL}?q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (q !== lastQ) return; // évite les courses entre requêtes
+        render(q, data);
+      } catch (e) {
+        console.error(e);
+        render(q, { products: [], categories: [] });
+      }
+    }, DEBOUNCE_MS);
 
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                cursor = (cursor < max) ? cursor + 1 : 0;
-                updateActive();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                cursor = (cursor > 0) ? cursor - 1 : max;
-                updateActive();
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (cursor >= 0 && items[cursor]) goToProduct(items[cursor].id);
-                else if (input.value.trim()) goToResults(input.value.trim());
-            } else if (e.key === 'Escape') {
-                dd.style.display = 'none';
-            }
-        });
+    // Events
+    input.addEventListener('input', (e) => doSearch(e.target.value));
+    input.addEventListener('focus', () => { if (input.value.trim()) doSearch(input.value); });
 
-        function updateActive() {
-            dd.querySelectorAll('.search-item').forEach((el, i) => {
-                if (i === cursor) {
-                    el.classList.add('active');
-                    el.scrollIntoView({
-                        block: 'nearest'
-                    });
-                } else {
-                    el.classList.remove('active');
-                }
-            });
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (!q) return;
+      goToResults(q);
+    });
+
+    // Clavier: Entrée / Échap / ↑ / ↓ (sur produits)
+    input.addEventListener('keydown', (e) => {
+      if (dd.style.display !== 'block') return;
+      const max = items.length - 1;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        cursor = (cursor < max) ? cursor + 1 : 0;
+        updateActive();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        cursor = (cursor > 0) ? cursor - 1 : max;
+        updateActive();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (cursor >= 0 && items[cursor]) goToProductUrl(items[cursor].url);
+        else if (input.value.trim()) goToResults(input.value.trim());
+      } else if (e.key === 'Escape') {
+        dd.style.display = 'none';
+      }
+    });
+
+    function updateActive() {
+      dd.querySelectorAll('.search-item').forEach((el, i) => {
+        if (i === cursor) {
+          el.classList.add('active');
+          el.style.background = '#f3f4f6';
+          el.scrollIntoView({ block: 'nearest' });
+        } else {
+          el.classList.remove('active');
+          el.style.background = '';
         }
+      });
+    }
 
-        // fermer si clic dehors
-        document.addEventListener('click', (e) => {
-            if (!dd.contains(e.target) && e.target !== input) {
-                dd.style.display = 'none';
-            }
-        });
-    })();
+    // Fermer si clic dehors
+    document.addEventListener('click', (e) => {
+      if (!dd.contains(e.target) && e.target !== input && e.target !== btn) {
+        dd.style.display = 'none';
+      }
+    });
+  })();
 </script>
 
 
-
 <script>
-(function(){
-  const KEY='cart';
-  const get=()=>JSON.parse(localStorage.getItem(KEY)||'[]');
-  const set=(v)=>localStorage.setItem(KEY, JSON.stringify(v));
-  document.querySelectorAll('.btn-add-to-cart').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const id=btn.dataset.id, name=btn.dataset.name;
-      const price=parseFloat(btn.dataset.price||'0');
-      const image=btn.dataset.image||'';
-      const cart=get();
-      const found=cart.find(i=>String(i.id)===String(id));
-      if(found) found.qty=(found.qty||0)+1;
-      else cart.push({id,name,price,qty:1,image,currency:'EUR'});
-      set(cart);
-      alert(`${name} a été ajouté au panier !`);
-    });
-  });
-})();
+    (function() {
+        const KEY = 'cart'; // même clé que ton checkout
+
+        // --- helpers ---
+        const read = () => {
+            try {
+                return JSON.parse(localStorage.getItem(KEY) || '[]');
+            } catch {
+                return [];
+            }
+        };
+
+        // ✅ set(items): écrit + notifie l'app (rafraîchit le badge sans reload)
+        function set(items) {
+            localStorage.setItem(KEY, JSON.stringify(items));
+            window.dispatchEvent(new CustomEvent('cart:changed')); // rafraîchit le badge immédiatement
+        }
+
+        const sumQty = (arr) => arr.reduce((t, i) => t + (parseInt(i.qty, 10) || 0), 0);
+        const cap = (n) => n > 99 ? '99+' : String(n);
+
+        // met à jour toutes les pastilles .cart-count
+        function renderBadge() {
+            const q = sumQty(read());
+            document.querySelectorAll('.cart-count').forEach(el => el.textContent = cap(q));
+        }
+
+        // ajoute un article (utilise data-* des boutons)
+        function addToCart({
+            id,
+            name,
+            price,
+            image = '',
+            currency = 'EUR',
+            qty = 1
+        }) {
+            const items = read();
+            const i = items.findIndex(x => String(x.id) === String(id));
+            if (i >= 0) items[i].qty = (parseInt(items[i].qty, 10) || 0) + (parseInt(qty, 10) || 1);
+            else items.push({
+                id: String(id),
+                name,
+                price: +price || 0,
+                qty: parseInt(qty, 10) || 1,
+                image,
+                currency
+            });
+
+            set(items); // 1) stocke et notifie (évènement cart:changed)
+            renderBadge(); // 2) MAJ immédiate de l’UI (au cas où)
+
+            // petit toast
+            const t = document.createElement('div');
+            t.textContent = `${name} ajouté au panier ✓`;
+            t.style.cssText =
+                'position:fixed;bottom:16px;right:16px;z-index:9999;background:#111;color:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:.25s';
+            document.body.appendChild(t);
+            requestAnimationFrame(() => {
+                t.style.opacity = '1';
+                t.style.transform = 'translateY(0)';
+            });
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(8px)';
+                setTimeout(() => t.remove(), 250);
+            }, 1200);
+        }
+
+        // délégation pour tous les boutons .btn-add-to-cart
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-add-to-cart');
+            if (!btn) return;
+            e.preventDefault();
+
+            // feedback express
+            const txt = btn.textContent,
+                css = btn.style.cssText;
+            btn.textContent = '✓ Ajouté !';
+            btn.style.cssText = css + 'background:#22c55e!important;transform:scale(.97);';
+            btn.disabled = true;
+
+            addToCart({
+                id: btn.dataset.id,
+                name: btn.dataset.name || 'Produit',
+                price: parseFloat(btn.dataset.price || '0'),
+                image: btn.dataset.image || '',
+                currency: btn.dataset.currency || 'EUR',
+                qty: parseInt(btn.dataset.qty || '1', 10) || 1
+            });
+
+            setTimeout(() => {
+                btn.textContent = txt;
+                btn.style.cssText = css;
+                btn.disabled = false;
+            }, 900);
+        });
+
+        // écoute les changements (autres composants/onglets)
+        window.addEventListener('cart:changed', renderBadge);
+        window.addEventListener('storage', (ev) => {
+            if (ev.key === KEY) renderBadge();
+        });
+
+        // premier rendu
+        document.addEventListener('DOMContentLoaded', renderBadge);
+        renderBadge();
+    })();
 </script>
 
 <script src="js/app-auth.js" defer></script>
@@ -2099,22 +2174,6 @@
     });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Chargement différé pour améliorer les performances
     document.addEventListener("DOMContentLoaded", function() {
         const iframe = document.querySelector(".youtube-container iframe");
@@ -2220,15 +2279,6 @@
     // ... (le reste de votre code JavaScript existant) ...
 
 
-
-
-
-
-
-
-
-
-
     // Gestion du menu mobile
     document.addEventListener("DOMContentLoaded", function() {
         const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
@@ -2323,10 +2373,6 @@
         // Implémentez ici la logique pour mettre à jour votre interface
     }
 
-
-
-
-
     // Fonctions pour gérer le modal
     function openCountryModal() {
         document.getElementById("dropdownCountry").style.display =
@@ -2352,8 +2398,6 @@
             closeCountryModal();
         }
     };
-
-
 
     document.getElementById("chatBtn").addEventListener("click", () => {
         document.getElementById("chatModal").style.display = "flex";
@@ -2386,11 +2430,6 @@
             chatBody.scrollTop = chatBody.scrollHeight;
         }
     });
-
-
-
-
-
 
     class ARMeasurementApp {
         constructor() {

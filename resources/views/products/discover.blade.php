@@ -12,11 +12,40 @@
     <link rel="stylesheet" href="{{ asset('css/discover.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+
+
 </head>
 
 <body>
 
     @include('partials.header')
+  {{-- Helper image URL (local + prod + mobile/webview) --}}
+@php
+$ABSOLUTE = true; // laisse à true pour mobile/WebView ; passe à false si tu préfères /storage/ relatif
+$host = rtrim(request()->getSchemeAndHttpHost(), '/');
+
+$toUrl = function ($v) use ($ABSOLUTE, $host) {
+    if (!$v) return '';
+
+    // 1) Enlève un host local si présent (localhost ou 127.0.0.1:xxxx)
+    $v = preg_replace('#^https?://(127\.0\.0\.1(:\d+)?|localhost(:\d+)?)#i', '', $v ?? '');
+
+    // 2) URL absolues http(s) ou data: → on garde
+    if (preg_match('#^(https?://|data:)#i', $v)) return $v;
+
+    // 3) Si c’est déjà /storage/xxx → relatif ou absolu selon $ABSOLUTE
+    if (strpos($v, '/storage/') === 0) {
+        return $ABSOLUTE ? $host . $v : $v;
+    }
+
+    // 4) Sinon, c’est un chemin de fichier du disque "public" (ex: products/xx.jpg)
+    //    -> Storage::url => /storage/products/xx.jpg  -> on le rend absolu si demandé
+    $rel = \Illuminate\Support\Facades\Storage::url(ltrim($v, '/')); // /storage/...
+    return $ABSOLUTE ? $host . $rel : $rel;
+};
+@endphp
+
 
     <!-- HERO 3D -->
     <section class="discover-hero">
@@ -310,56 +339,64 @@
 
             <div class="grid">
                 @forelse($products as $p)
-                    @php
-                        $imgs = (array) ($p->images ?? []);
-                        $img = count($imgs)
-                            ? $imgs[0]
-                            : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80&auto=format&fit=crop';
-                        $hasPromo = !is_null($p->discount_price);
-                        $display = $hasPromo ? $p->discount_price : $p->price;
-                    @endphp
+                 @php
+    // images -> array (supporte JSON stocké en BDD)
+    $imgs = is_array($p->images) ? $p->images : (json_decode($p->images ?? '[]', true) ?: []);
+
+    // image principale normalisée (absolue si $ABSOLUTE = true)
+    $img = !empty($imgs[0])
+        ? $toUrl($imgs[0])
+        : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80&auto=format&fit=crop';
+
+    $hasPromo = !is_null($p->discount_price);
+    $display  = $hasPromo ? $p->discount_price : $p->price;
+@endphp
+
+
+
                     <a href="{{ route('products.show', $p->id) }}">
-                    <article class="card" data-id="{{ $p->id }}">
-                        <div class="media">
-                            <img loading="lazy" src="{{ $img }}" alt="{{ $p->name }}">
-                            @if ($hasPromo)
-                                <span
-                                    class="badge">-{{ number_format((1 - $p->discount_price / $p->price) * 100, 0) }}%</span>
-                            @elseif($p->is_featured)
-                                <span class="badge">Vedette</span>
-                            @endif
-                            <div class="like">
-                                <button class="btn-like" aria-label="Aimer" data-liked="false">
-                                    <i class="fa-regular fa-heart"></i>
-                                </button>
-                                <span class="count" data-like-count>{{ $p->likes_count }}</span>
-                            </div>
-                            <div class="views" style="top:auto;bottom:10px;right:10px">
-                                <span class="count" data-view-count title="Vues">👁 {{ $p->views_count }}</span>
-                            </div>
-                        </div>
-                        <div class="info">
-                            <h3 class="title">{{ $p->name }}</h3>
-                            <div class="price">
-                                <span data-price>{{ number_format($display, 2, ',', ' ') }}
-                                    {{ $p->currency ?? 'EUR' }}</span>
+                        <article class="card" data-id="{{ $p->id }}">
+                            <div class="media">
+                                <img loading="lazy" src="{{ $img }}" alt="{{ $p->name }}">
                                 @if ($hasPromo)
-                                    <span class="old">{{ number_format($p->price, 2, ',', ' ') }}
-                                        {{ $p->currency ?? 'EUR' }}</span>
+                                    <span
+                                        class="badge">-{{ number_format((1 - $p->discount_price / $p->price) * 100, 0) }}%</span>
+                                @elseif($p->is_featured)
+                                    <span class="badge">Vedette</span>
                                 @endif
+                                <div class="like">
+                                    <button class="btn-like" aria-label="Aimer" data-liked="false">
+                                        <i class="fa-regular fa-heart"></i>
+                                    </button>
+                                    <span class="count" data-like-count>{{ $p->likes_count }}</span>
+                                </div>
+                                <div class="views" style="top:auto;bottom:10px;right:10px">
+                                    <span class="count" data-view-count title="Vues">👁
+                                        {{ $p->views_count }}</span>
+                                </div>
                             </div>
-                            <div class="meta">
-                                <span>❤ <span data-like-count-inline>{{ $p->likes_count }}</span></span>
-                                <span>👁 <span data-view-count-inline>{{ $p->views_count }}</span></span>
-                            </div>
-                            <button class="btn-add-to-cart" type="button" data-id="{{ $p->id }}"
-                                data-name="{{ $p->name }}" data-price="{{ $display }} "
-                                 data-image="{{ $img /* ton URL d’image principale */ }}
+                            <div class="info">
+                                <h3 class="title">{{ $p->name }}</h3>
+                                <div class="price">
+                                    <span data-price>{{ number_format($display, 2, ',', ' ') }}
+                                        {{ $p->currency ?? 'EUR' }}</span>
+                                    @if ($hasPromo)
+                                        <span class="old">{{ number_format($p->price, 2, ',', ' ') }}
+                                            {{ $p->currency ?? 'EUR' }}</span>
+                                    @endif
+                                </div>
+                                <div class="meta">
+                                    <span>❤ <span data-like-count-inline>{{ $p->likes_count }}</span></span>
+                                    <span>👁 <span data-view-count-inline>{{ $p->views_count }}</span></span>
+                                </div>
+                                <button class="btn-add-to-cart" type="button" data-id="{{ $p->id }}"
+                                    data-name="{{ $p->name }}" data-price="{{ $display }} "
+                                    data-image="{{ $img }}
 
                                 ">Ajouter au
-                                panier</button>
-                        </div>
-                    </article>
+                                    panier</button>
+                            </div>
+                        </article>
                     </a>
                 @empty
                     <p>Aucun produit pour le moment.</p>
@@ -377,11 +414,21 @@
                     <div class="slide-row">
                         @foreach ($featured as $f)
                             @php
-                                $imgs = (array) ($f->images ?? []);
-                                $img = count($imgs)
-                                    ? $imgs[0]
+                                $imgs = is_array($f->images)
+                                    ? $f->images
+                                    : (json_decode($f->images ?? '[]', true) ?:
+                                    []);
+                                $toUrl = fn($v) => !$v
+                                    ? ''
+                                    : (Str::startsWith($v, ['http://', 'https://', 'data:', '/storage/'])
+                                        ? $v
+                                        : asset('storage/' . ltrim($v, '/')));
+                                $img = $imgs
+                                    ? $toUrl($imgs[0])
                                     : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80&auto=format&fit=crop';
                             @endphp
+
+
                             <article class="slide">
                                 <img loading="lazy" src="{{ $img }}" alt="{{ $f->name }}"
                                     style="width:100%;aspect-ratio:16/9;object-fit:cover">
@@ -404,11 +451,20 @@
                         <div class="slide-row">
                             @foreach ($promos as $s)
                                 @php
-                                    $imgs = (array) ($s->images ?? []);
-                                    $img = count($imgs)
-                                        ? $imgs[0]
+                                    $imgs = is_array($s->images)
+                                        ? $s->images
+                                        : (json_decode($s->images ?? '[]', true) ?:
+                                        []);
+                                    $toUrl = fn($v) => !$v
+                                        ? ''
+                                        : (Str::startsWith($v, ['http://', 'https://', 'data:', '/storage/'])
+                                            ? $v
+                                            : asset('storage/' . ltrim($v, '/')));
+                                    $img = $imgs
+                                        ? $toUrl($imgs[0])
                                         : 'https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=800&q=80&auto=format&fit=crop';
                                 @endphp
+
                                 <article class="slide">
                                     <img loading="lazy" src="{{ $img }}" alt="{{ $s->name }}"
                                         style="width:100%;aspect-ratio:16/9;object-fit:cover">
@@ -755,7 +811,7 @@
                     const row = document.createElement("div");
                     row.className = "summary-item";
                     row.innerHTML =
-                    `<span>${item.name} x${item.quantity}</span><span>${euro(itemTotal)}</span>`;
+                        `<span>${item.name} x${item.quantity}</span><span>${euro(itemTotal)}</span>`;
                     cartItemsContainer.appendChild(row);
                 });
                 subtotalElement.textContent = euro(subtotal);
@@ -1017,7 +1073,7 @@
 
                 if (couponCode.toUpperCase() === "KELU15") {
                     const subtotal = parseFloat((subtotalElement.textContent || '0').replace(/[€\s]/g, "")) ||
-                    0;
+                        0;
                     const discount = subtotal * 0.15;
                     const total = subtotal - discount;
 
@@ -1332,7 +1388,10 @@
     <script src="{{ asset('js/cart-core.js') }}" defer></script>
     <script src="{{ asset('js/app-auth.js') }}" defer></script>
 
-    @include('partials.footer')
+
+
+
+
 </body>
 
 </html>

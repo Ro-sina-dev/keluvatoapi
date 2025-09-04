@@ -68,8 +68,38 @@ $specs = [
                         </div>
                     @endif
 
+                    @php
+    // 1) Récupérer la première image (supporte array, JSON, string, null)
+    $raw = $product->images ?? [];
+    if (!is_array($raw)) {
+        $decoded = json_decode($raw, true);
+        $imgs = is_array($decoded) ? $decoded : (strlen(trim((string)$raw)) ? [$raw] : []);
+    } else {
+        $imgs = $raw;
+    }
+
+    // 2) Helper minimal pour obtenir une URL affichable en local & prod
+    $toUrl = function ($v) {
+        if (!$v) return '';
+        // enlève un host local si présent (évite 127.0.0.1 en prod)
+        $v = preg_replace('#^https?://(127\.0\.0\.1(:\d+)?|localhost(:\d+)?)#i', '', $v ?? '');
+        // si c'est déjà http(s) ou data:, on garde
+        if (preg_match('#^(https?://|data:)#i', $v)) return $v;
+        // si ça commence par /storage/, on laisse relatif (ok local & prod)
+        if (strpos($v, '/storage/') === 0) return $v;
+        // sinon, fabriquer /storage/... depuis le disque public
+        return \Illuminate\Support\Facades\Storage::url(ltrim($v, '/'));
+    };
+
+    // 3) $img final avec fallback
+    $img = !empty($imgs[0])
+        ? $toUrl($imgs[0])
+        : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&q=80&auto=format&fit=crop';
+@endphp
+
                     <div class="main-wrap">
                         <div class="main-img tilt" id="mainWrap">
+
                             <img id="mainImg" class="float" src="{{ $img }}" alt="{{ $product->name }}">
                             <div class="lens" id="lens"></div>
                             <button class="lightbox-btn" id="openLightbox" aria-label="Voir en plein écran">⤢</button>
@@ -234,37 +264,63 @@ $specs = [
                     style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px">
                     <h3 style="color:var(--brand);margin:0">Offre spéciale 🎉</h3>
                     <p style="color:var(--muted);margin:0 0 8px">Découvrez nos promos de la semaine</p>
-                    <img src="https://images.unsplash.com/photo-1607082349566-1873425b6b07?w=600&q=80&auto=format&fit=crop"
+                     <!-- <img src="https://images.unsplash.com/photo-1607082349566-1873425b6b07?w=600&q=80&auto=format&fit=crop"
                         alt="Publicité" style="width:100%;border-radius:12px;object-fit:cover;max-height:220px">
-                    <button class="btn primary" style="margin-top:10px">Voir l’offre</button>
+                 Pub / Promo -->
+                        <button class="btn primary" style="margin-top:10px">Voir l’offre</button>
                 </aside>
             </div>
         </div>
 
-        @if (!empty($related) && count($related))
-            <section class="related reveal">
-                <h2 style="margin:12px 4px 12px;color:var(--brand);font-size:1.3rem">Produits similaires</h2>
-                <div class="grid-rel">
-                    @foreach ($related as $p)
-                        @php
-                            $rimgs = (array) ($p->images ?? []);
-                            $rimg = count($rimgs)
-                                ? $rimgs[0]
-                                : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80&auto=format&fit=crop';
-                            $rHasPromo = !is_null($p->discount_price ?? null);
-                            $rDisplay = $rHasPromo ? $p->discount_price : $p->price;
-                        @endphp
-                        <a class="card pad rel-card" href="{{ route('products.show', $p->id) }}"
-                            style="text-decoration:none;color:inherit">
-                            <img src="{{ $rimg }}" alt="{{ $p->name }}">
-                            <div class="rel-title">{{ $p->name }}</div>
-                            <div class="rel-price">{{ number_format($rDisplay, 2, ',', ' ') }}
-                                {{ $p->currency ?? 'EUR' }}</div>
-                        </a>
-                    @endforeach
-                </div>
-            </section>
-        @endif
+     @if (!empty($related) && count($related))
+    @php
+        // Helper image (protégé contre redéclaration)
+        if (!isset($toUrl) || !is_callable($toUrl)) {
+            $toUrl = function ($v) {
+                if (!$v) return '';
+                // enlève un host local s'il traîne en BDD
+                $v = preg_replace('#^https?://(127\.0\.0\.1(:\d+)?|localhost(:\d+)?)#i', '', $v ?? '');
+                // URL absolue http(s) ou data:
+                if (preg_match('#^(https?://|data:)#i', $v)) return $v;
+                // déjà /storage/...
+                if (strpos($v, '/storage/') === 0) return $v;
+                // chemin disque public -> /storage/...
+                return \Illuminate\Support\Facades\Storage::url(ltrim($v, '/'));
+            };
+        }
+    @endphp
+
+    <section class="related reveal">
+        <h2 style="margin:12px 4px 12px;color:var(--brand);font-size:1.3rem">Produits similaires</h2>
+        <div class="grid-rel">
+            @foreach ($related as $p)
+                @php
+                    // images : accepte array | JSON | string | null
+                    $raw   = $p->images ?? [];
+                    if (!is_array($raw)) {
+                        $dec   = json_decode($raw, true);
+                        $rimgs = is_array($dec) ? $dec : (strlen(trim((string)$raw)) ? [$raw] : []);
+                    } else {
+                        $rimgs = $raw;
+                    }
+
+                    // URL normalisée + fallback
+                    $rimg      = !empty($rimgs[0]) ? $toUrl($rimgs[0])
+                              : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80&auto=format&fit=crop';
+                    $rHasPromo = !is_null($p->discount_price ?? null);
+                    $rDisplay  = $rHasPromo ? $p->discount_price : $p->price;
+                @endphp
+
+                <a class="card pad rel-card" href="{{ route('products.show', $p->id) }}" style="text-decoration:none;color:inherit">
+                    <img src="{{ $rimg }}" alt="{{ $p->name }}">
+                    <div class="rel-title">{{ $p->name }}</div>
+                    <div class="rel-price">{{ number_format($rDisplay, 2, ',', ' ') }} {{ $p->currency ?? 'EUR' }}</div>
+                </a>
+            @endforeach
+        </div>
+    </section>
+@endif
+
     </div>
 
     <!-- Lightbox -->
