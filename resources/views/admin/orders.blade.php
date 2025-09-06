@@ -693,21 +693,193 @@
                         <th>ID</th>
                         <th>Client</th>
                         <th>Date</th>
+                        <th>Produits</th>
                         <th>Montant</th>
                         <th>Statut</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Les commandes seront chargées ici dynamiquement -->
+                    @forelse($orders as $order)
+                    <tr>
+                        <td>#{{ $order->id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-2">
+                                    {{ strtoupper(substr($order->user->name, 0, 1)) }}
+                                </div>
+                                <div>
+                                    <div class="fw-medium">{{ $order->user->name }}</div>
+                                    <small class="text-muted">{{ $order->user->email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                @foreach($order->items as $item)
+                                <span>{{ $item->quantity }}x {{ $item->name }}</span>
+                                @endforeach
+                            </div>
+                        </td>
+                        <td class="fw-bold">{{ number_format($order->total, 2, ',', ' ') }} €</td>
+                        <td>
+                            @php
+                                $statusClass = [
+                                    'pending' => 'bg-warning',
+                                    'processing' => 'bg-info',
+                                    'completed' => 'bg-success',
+                                    'cancelled' => 'bg-danger'
+                                ][$order->status] ?? 'bg-white text-dark';
+                            @endphp
+                            <span class="badge {{ $statusClass }}">
+                                {{ ucfirst($order->status) }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-icon" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-eye me-2"></i> Voir les détails
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-truck me-2"></i> Suivi
+                                    </a>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">Aucune commande trouvée</div>
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+        
+        @if($orders->hasPages())
+        <div class="card-footer">
+            <div class="d-flex justify-content-center">
+                {{ $orders->links() }}
+            </div>
+        </div>
+        @endif
     </div>
-  
   </div>
 
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <style>
+    .tablex {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      color: var(--txt);
+    }
+    
+    .tablex th {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--stroke);
+    }
+    
+    .tablex td {
+      padding: 16px;
+      border-bottom: 1px solid var(--stroke);
+      vertical-align: middle;
+    }
+    
+    .tablex tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .tablex tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(110, 168, 254, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand);
+      font-weight: 600;
+    }
+    
+    .badge {
+      font-weight: 500;
+      padding: 0.5em 0.8em;
+      border-radius: 4px;
+    }
+    
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--txt);
+    }
+    
+    .dropdown-menu {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 0.5rem;
+    }
+    
+    .dropdown-item {
+      color: var(--txt);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    
+    .dropdown-item:hover {
+      background: rgba(110, 168, 254, 0.1);
+      color: var(--brand);
+    }
+    
+    .pagination {
+      margin: 0;
+    }
+    
+    .page-link {
+      background: var(--card);
+      border-color: var(--stroke);
+      color: var(--txt);
+      margin: 0 2px;
+      border-radius: 4px !important;
+    }
+    
+    .page-item.active .page-link {
+      background: var(--brand);
+      border-color: var(--brand);
+    }
+  </style>
 </body>
 
 </html>
-

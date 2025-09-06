@@ -827,20 +827,20 @@
 
       <!-- Products Admin -->
       <section id="products" class="grid" style="grid-template-columns: 1.1fr 1fr">
-        <div class="cardx">
-          <div class="hd">
-            <h5 class="m-0">Créer un produit</h5>
-          </div>
-                          @if(session('success'))
-                  <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-                @if($errors->any())
-                  <div class="alert alert-danger">
-                    <ul style="margin:0;padding-left:1rem">
-                      @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-                    </ul>
-                  </div>
-                @endif
+                        <div class="cardx">
+                          <div class="hd">
+                            <h5 class="m-0">Créer un produit</h5>
+                          </div>
+                                          @if(session('success'))
+                                  <div class="alert alert-success">{{ session('success') }}</div>
+                                @endif
+                                @if($errors->any())
+                                  <div class="alert alert-danger">
+                                    <ul style="margin:0;padding-left:1rem">
+                                      @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+                                    </ul>
+                                  </div>
+                                @endif
 
                                       <form method="POST"
                                             action="{{ route('admin.products.store') }}"
@@ -949,24 +949,24 @@
                                             </script>
 
 
-        </div>
+                  </div>
 
-        <div class="cardx">
-          <div class="hd">
-            <h5 class="m-0">Produits populaires</h5>
-          </div>
-          <ol id="topList" class="list-clean" style="counter-reset: rank; padding-left: 0">
-            @forelse($topProducts as $product)
-            <li style="display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1)">
-              <span style="font-weight: 800; color: var(--brand)">{{ $loop->iteration }}.</span>
-              <span style="flex: 1">{{ $product->name }}</span>
-              <span class="badge bg-secondary">{{ $product->total_quantity }} vendus</span>
-            </li>
-            @empty
-            <li class="text-muted">Aucune donnée de vente disponible</li>
-            @endforelse
-          </ol>
-        </div>
+                  <div class="cardx">
+                    <div class="hd">
+                      <h5 class="m-0">Produits populaires</h5>
+                    </div>
+                    <ol id="topList" class="list-clean" style="counter-reset: rank; padding-left: 0">
+                      @forelse($topProducts as $product)
+                      <li style="display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1)">
+                        <span style="font-weight: 800; color: var(--brand)">{{ $loop->iteration }}.</span>
+                        <span style="flex: 1">{{ $product->name }}</span>
+                        <span class="badge bg-white text-dark">{{ $product->total_quantity }} vendus</span>
+                      </li>
+                      @empty
+                      <li class="text-muted">Aucune donnée de vente disponible</li>
+                      @endforelse
+                    </ol>
+                  </div>
       </section>
 
       <!-- Recent Orders -->
@@ -1013,7 +1013,7 @@
                         'processing' => 'bg-info',
                         'completed' => 'bg-success',
                         'cancelled' => 'bg-danger'
-                    ][$order->status] ?? 'bg-secondary';
+                    ][$order->status] ?? 'bg-white text-dark';
                   @endphp
                   <span class="badge {{ $statusClass }}">
                     {{ ucfirst(__('orders.status.' . $order->status)) }}

@@ -16,6 +16,10 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\CategoryPageController;
 
+use App\Http\Controllers\StripeWebhookController;
+
+
+
 // =============================
 // 📌 Page d'accueil
 // =============================
@@ -29,28 +33,42 @@ Route::middleware(['auth'])
     ->group(function () {
         // Tableau de bord
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        
+
         // Gestion des produits
         Route::resource('products', 'App\Http\Controllers\Admin\ProductController');
-        
+
         // Gestion des commandes
         Route::get('/orders', function () {
-            return view('admin.orders');
+            $orders = \App\Models\Order::with(['user', 'items'])
+                ->whereHas('user', function($query) {
+                    $query->where('role', '!=', 'admin');
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate(15);
+            return view('admin.orders', compact('orders'));
         })->name('orders');
-        
+
         // Gestion des utilisateurs
         Route::get('/users', function () {
-            return view('admin.users');
+            $users = \App\Models\User::latest()->paginate(15);
+            return view('admin.users', compact('users'));
         })->name('users');
-        
+
         // Analytics
         Route::get('/analytics', function () {
             return view('admin.analytics');
         })->name('analytics');
-        
+
         // Gestion des couleurs
-        Route::get('/colors', [\App\Http\Controllers\Admin\ColorController::class, 'index'])->name('colors.index');
-        Route::post('/colors', [\App\Http\Controllers\Admin\ColorController::class, 'store'])->name('colors.store');
+        Route::get('/colors', function() {
+            return view('admin.colors.index');
+        })->name('colors.index');
+
+        Route::prefix('colors')->group(function() {
+            Route::get('/', [\App\Http\Controllers\Admin\ColorController::class, 'index']);
+            Route::post('/', [\App\Http\Controllers\Admin\ColorController::class, 'store'])->name('colors.store');
+            Route::delete('/{color}', [\App\Http\Controllers\Admin\ColorController::class, 'destroy'])->name('colors.destroy');
+        });
     });
 
 
@@ -68,7 +86,7 @@ Route::middleware('guest')->group(function () {
     // Mot de passe oublié
     Route::get('/forgot-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/forgot-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-    
+
     // Réinitialisation du mot de passe
     Route::get('/reset-password/{token}', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])->name('password.update');
@@ -124,6 +142,11 @@ Route::post('/checkout/delivery', [CheckoutController::class, 'saveDelivery'])->
 Route::get('/checkout/payment', [CheckoutController::class, 'payment'])->name('checkout.payment');
 Route::post('/checkout/place', [CheckoutController::class, 'place'])->name('checkout.place');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+
+Route::post('/checkout/stripe', [CheckoutController::class, 'createStripeCheckout'])->name('checkout.stripe');
+Route::get('/checkout/cancel',  [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+Route::post('/stripe/webhook',  [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
+
 
 // =============================
 // 👤 Espace connecté (auth requis)

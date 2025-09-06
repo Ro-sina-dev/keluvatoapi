@@ -635,14 +635,65 @@
         animation: none !important;
       }
     }
+    /* Styles pour la modal de détails */
+    .user-details-modal .modal-content {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      color: var(--txt);
+      border-radius: var(--radius);
+    }
+    
+    .user-details-modal .modal-header {
+      border-bottom: 1px solid var(--stroke);
+    }
+    
+    .user-details-modal .modal-body {
+      padding: 1.5rem;
+    }
+    
+    .user-avatar-lg {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: white;
+      margin: 0 auto 1rem;
+    }
+    
+    .user-detail-item {
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--stroke);
+    }
+    
+    .user-detail-label {
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+      font-size: 0.875rem;
+    }
+    
+    .user-detail-value {
+      font-size: 1rem;
+    }
+    
+    .clickable-row {
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .clickable-row:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
   </style>
 </head>
 <div class="section">
-    
-</div>
-
-<div class="app">
-    <!-- Sidebar -->
+  <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <i class="fa-solid fa-cubes-stacked"></i>
@@ -676,12 +727,11 @@
         <span class="chip">Group</span>
       </div>
     </aside>
+    
     <div class="cardx">
         <div class="hd">
             <h5>Liste des Utilisateurs</h5>
-            <a href="#" class="btn-brand">
-                <i class="fa-solid fa-plus"></i> Ajouter
-            </a>
+            
         </div>
         <div class="table-responsive">
             <table class="tablex">
@@ -696,14 +746,199 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Les utilisateurs seront chargés ici dynamiquement -->
+                    @foreach($users as $user)
+                    @if($user->role !== 'admin')
+                    <tr class="clickable-row" onclick="showUserDetails({{ json_encode($user) }}); return false;">
+                        <td>{{ $user->id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-2">
+                                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                                </div>
+                                <div>
+                                    <div class="fw-medium">{{ $user->name }}</div>
+                                    @if($user->company_name)
+                                        <small class="text-muted">{{ $user->company_name }}</small>
+                                    @endif
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ $user->email }}</td>
+                        <td>
+                            @php
+                                $badgeClass = match($user->role) {
+                                    'admin' => 'bg-danger',
+                                    'pro' => 'bg-primary',
+                                    default => 'bg-white text-dark'
+                                };
+                            @endphp
+                            <span class="badge {{ $badgeClass }}">
+                                {{ ucfirst($user->role) }}
+                            </span>
+                        </td>
+                        <td>{{ $user->created_at->format('d/m/Y') }}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <i class="fas fa-eye me-2"></i> Voir
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <i class="fas fa-edit me-2"></i> Modifier
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    @endif
+                    @endforeach
                 </tbody>
             </table>
+            
+            <div class="mt-4">
+                {{ $users->links() }}
+            </div>
         </div>
     </div>
   </div>
+</div>
 
-</body>
-</body>
+  <!-- Modal Détails Utilisateur -->
+  <div class="modal fade user-details-modal" id="userDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Détails de l'utilisateur</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <div class="user-avatar-lg" id="userAvatar">U</div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="user-detail-item">
+                <div class="user-detail-label">Nom complet</div>
+                <div class="user-detail-value" id="userName">-</div>
+              </div>
+              
+              <div class="user-detail-item">
+                <div class="user-detail-label">Email</div>
+                <div class="user-detail-value" id="userEmail">-</div>
+              </div>
+              
+              <div class="user-detail-item">
+                <div class="user-detail-label">Téléphone</div>
+                <div class="user-detail-value" id="userPhone">-</div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="user-detail-item">
+                <div class="user-detail-label">Type de compte</div>
+                <div class="user-detail-value">
+                  <span class="badge" id="userRole">-</span>
+                </div>
+              </div>
+              
+              <div class="user-detail-item">
+                <div class="user-detail-label">Entreprise</div>
+                <div class="user-detail-value" id="userCompany">-</div>
+              </div>
+              
+              <div class="user-detail-item">
+                <div class="user-detail-label">Date d'inscription</div>
+                <div class="user-detail-value" id="userCreatedAt">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
 
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Attendre que le DOM soit chargé
+    document.addEventListener('DOMContentLoaded', function() {
+      // Fonction pour afficher les détails de l'utilisateur
+      window.showUserDetails = function(user) {
+        try {
+          // Convertir la chaîne JSON en objet si nécessaire
+          if (typeof user === 'string') {
+            user = JSON.parse(user);
+          }
+          
+          // Ne pas ouvrir la modal pour les administrateurs
+          if (user.role === 'admin') return;
+          
+          console.log('Affichage des détails pour:', user);
+          
+          // Mettre à jour les informations dans la modal
+          document.getElementById('userAvatar').textContent = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+          document.getElementById('userName').textContent = user.name || 'Non renseigné';
+          document.getElementById('userEmail').textContent = user.email || 'Non renseigné';
+          document.getElementById('userPhone').textContent = user.phone || 'Non renseigné';
+          document.getElementById('userCompany').textContent = user.company_name || 'Non renseigné';
+          
+          // Formater la date d'inscription
+          let createdAt = 'Non disponible';
+          if (user.created_at) {
+            const date = new Date(user.created_at);
+            createdAt = date.toLocaleDateString('fr-FR');
+          }
+          document.getElementById('userCreatedAt').textContent = createdAt;
+          
+          // Mettre à jour le badge de rôle
+          const roleBadge = document.getElementById('userRole');
+          if (roleBadge) {
+            roleBadge.textContent = user.role === 'pro' ? 'Professionnel' : 'Client';
+            roleBadge.className = 'badge ' + (user.role === 'pro' ? 'bg-primary' : 'bg-white text-dark');
+          }
+          
+          // Mettre à jour le lien d'édition
+          const editBtn = document.getElementById('editUserBtn');
+          if (editBtn) {
+            editBtn.href = '#'; // Remplacer par la route d'édition si nécessaire
+          }
+          
+          // Afficher la modal
+          const modalElement = document.getElementById('userDetailsModal');
+          if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+          } else {
+            console.error('Élément modal non trouvé');
+          }
+        } catch (error) {
+          console.error('Erreur lors de l\'affichage des détails:', error);
+        }
+      };
+      
+      // Empêcher la propagation du clic sur les actions pour ne pas ouvrir la modal
+      document.querySelectorAll('.dropdown-menu a, .dropdown-menu button').forEach(element => {
+        element.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+      });
+      
+      // Vérifier que Bootstrap est chargé
+      if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap n\'est pas chargé correctement');
+      }
+    });
+  </script>
+</body>
 </html>

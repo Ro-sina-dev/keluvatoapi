@@ -1,6 +1,24 @@
-@extends('layouts.admin')
+<!DOCTYPE html>
+<html lang="fr">
 
-@section('content')
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keluvato • Admin</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/4f6d5d3b2c.js" crossorigin="anonymous"></script>
+
+  <!-- Bootstrap (utilisé pour la grille & utilitaires) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{{ asset('js/google-translate.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <div class="container">
     <h2>Créer un nouveau produit</h2>
     
@@ -85,4 +103,7 @@
         border-radius: 3px;
     }
 </style>
-@endsection
+</body>
+</body>
+
+</html>
