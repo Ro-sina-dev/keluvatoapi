@@ -6,6 +6,7 @@ use Stripe\StripeClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+
 class CheckoutController extends Controller
 {
     public function index()
@@ -25,43 +26,64 @@ class CheckoutController extends Controller
         session()->forget('cart'); // vide le panier après commande
         return redirect()->route('home')->with('success', 'Paiement effectué avec succès !');
     }
-
-
-
-
 public function createStripeCheckout(Request $request)
 {
     $cart = session('cart', []);
     if (empty($cart)) return back()->with('error', 'Panier vide.');
 
     $currency = strtolower(session('checkout.currency', 'eur'));
+    $subtotal = collect($cart)->sum(fn($i) => ((float)($i['price'] ?? 0)) * ((int)($i['qty'] ?? 0)));
+    $shipping = 0.0;
+    $tax = 0.0;
+    $total = $subtotal + $shipping + $tax;
 
+    // 1) Créer la commande "pending"
+    $order = \App\Models\Order::create([
+        'user_id'          => Auth::id(),                // <- plus de "\Auth"
+        'number'           => 'CMD-'.now()->format('Ymd-His'),
+        'status'           => 'pending',
+        'currency'         => strtoupper($currency),
+        'subtotal'         => $subtotal,
+        'shipping'         => $shipping,
+        'tax'              => $tax,
+        'total'            => $total,
+        'shipping_address' => session('checkout.delivery'),
+        'payment_provider' => 'stripe',
+    ]);
+
+    // 2) Lignes Stripe (en centimes)
     $lineItems = [];
     foreach ($cart as $it) {
-        $unitAmount = (int) round(((float)($it['price'] ?? 0)) * 100);
-        $name = (string) Arr::get($it, 'name', 'Article');
-        $qty  = max(1, (int) Arr::get($it, 'qty', 1));
-
         $lineItems[] = [
             'price_data' => [
-                'currency' => $currency,
-                'product_data' => ['name' => mb_substr($name, 0, 120)],
-                'unit_amount' => $unitAmount,
+                'currency'     => $currency,
+                'product_data' => ['name' => mb_substr((string)($it['name'] ?? 'Article'), 0, 120)],
+                'unit_amount'  => (int) round(((float)($it['price'] ?? 0)) * 100),
             ],
-            'quantity' => $qty,
+            'quantity' => max(1, (int)($it['qty'] ?? 1)),
         ];
     }
-
-    $stripe = new StripeClient(config('services.stripe.secret'));
-    $session = $stripe->checkout->sessions->create([
-        'mode'        => 'payment',
-        'line_items'  => $lineItems,
-        'success_url' => route('checkout.success') . '?session_id={CHECKOUT_SESSION_ID}',
-        'cancel_url'  => route('checkout.cancel'),
-'customer_email' => optional(Auth::user())->email, // null si pas connecté
-
-        'metadata'    => ['order_ref' => 'KELU-' . now()->format('YmdHis')],
+foreach ($cart as $it) {
+    $order->items()->create([
+        'product_id' => $it['id'] ?? null,
+        'name'       => $it['name'] ?? 'Article',
+        'price'      => (float)($it['price'] ?? 0),
+        'quantity'   => (int)($it['qty'] ?? 1),
+        'meta'       => ['image' => $it['image'] ?? null], // si tu veux
     ]);
+}
+
+    $stripe  = new \Stripe\StripeClient(config('services.stripe.secret'));
+    $session = $stripe->checkout->sessions->create([
+        'mode'           => 'payment',
+        'line_items'     => $lineItems,
+        'success_url'    => route('checkout.success').'?session_id={CHECKOUT_SESSION_ID}',
+        'cancel_url'     => route('checkout.cancel'),
+        'customer_email' => Auth::user()?->email,        // <- plus de "\Auth"
+        'metadata'       => ['order_id' => (string)$order->id, 'order_number' => $order->number],
+    ]);
+
+    $order->update(['stripe_session_id' => $session->id]);
 
     return redirect()->away($session->url);
 }
@@ -180,61 +202,73 @@ public function createStripeCheckout(Request $request)
         return redirect()->route('checkout.success');
     }
 
-    /** Étape 4 : confirmation */
-public function success(Request $request)
-{
-    $sessionId = $request->query('session_id');
+    public function success(Request $request)
+    {
+        $sessionId = $request->query('session_id');
+        if (!$sessionId) {
+            return redirect()->route('checkout.index');
+        }
 
-    // Cas non-Stripe (ex: paiement à la livraison)
-    if (!$sessionId) {
-        $order = session('checkout.last_order');
-        if ($order) {
+        try {
+            $stripe  = new StripeClient(config('services.stripe.secret'));
+            $session = $stripe->checkout->sessions->retrieve($sessionId, ['expand' => ['payment_intent']]);
+        } catch (\Throwable $e) {
+            return redirect()->route('checkout.index')->with('error', 'Référence Stripe invalide.');
+        }
+
+        // On cherche d’abord par l’ID de session
+        $order = \App\Models\Order::where('stripe_session_id', $sessionId)->first();
+
+        // Fallback : si non trouvée, on tente via metadata (au cas où)
+        if (!$order && isset($session->metadata->order_id)) {
+            $order = \App\Models\Order::find($session->metadata->order_id);
+        }
+
+        if (!$order) {
+            return redirect()->route('checkout.index')->with('error', 'Commande introuvable.');
+        }
+
+        // Sécurité : si la commande est liée à un utilisateur, on s’assure que c’est bien lui
+        if ($order->user_id && Auth::check() && $order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($session && $session->payment_status === 'paid') {
+            // Idempotent : on ne re-fait rien si déjà “paid”
+            if ($order->status !== 'paid') {
+                $order->update([
+                    'status'                => 'paid',
+                    'stripe_payment_intent' => is_string($session->payment_intent)
+                                                ? $session->payment_intent
+                                                : ($session->payment_intent->id ?? null),
+                    'paid_at'               => now(),
+                    'total'                 => ($session->amount_total ?? ($order->total * 100)) / 100,
+                    'currency'              => strtoupper($session->currency ?? $order->currency),
+                ]);
+
+                // ➜ Ici, c’est l’endroit idéal pour :
+                // - décrémenter le stock
+                // - envoyer l’email de confirmation
+                // - notifier ton back-office
+                // dispatch(new SendOrderConfirmation($order));
+            }
+
+            session()->forget('cart');
+
             return view('checkout', [
                 'step'     => 4,
                 'order'    => $order,
                 'cart'     => [],
-                'totals'   => ['subtotal' => 0, 'total' => 0],
-                'shipping' => $order['shipping'] ?? null,
+                'totals'   => ['subtotal' => $order->total, 'total' => $order->total],
+                'shipping' => $order->shipping_address,
             ]);
         }
-        return redirect()->route('checkout.index');
+
+        // Si tu ajoutes des moyens “asynchrones” (SEPA, etc.), tu peux mettre la commande en “processing” ici.
+        return redirect()->route('checkout.index')->with('error', 'Paiement non confirmé.');
     }
 
-    // ✅ Vérification côté serveur de la session Checkout
-    try {
-        $stripe  = new \Stripe\StripeClient(config('services.stripe.secret'));
-        $session = $stripe->checkout->sessions->retrieve($sessionId, [
-            'expand' => ['payment_intent', 'customer']
-        ]);
-    } catch (\Throwable $e) {
-        // Mauvaise clé, réseau, id invalide, etc.
-        return redirect()->route('checkout.index')->with('error', 'Erreur Stripe: '.$e->getMessage());
-    }
 
-    if ($session && $session->payment_status === 'paid') {
-        // Ici tu marques la commande comme payée (DB idéalement)
-        session()->forget('cart');
-
-        $order = [
-            'number'   => $session->metadata->order_ref ?? ('CMD-' . now()->format('Ymd-His')),
-            'date'     => now(),
-            'total'    => ($session->amount_total ?? 0) / 100,
-            'payment'  => 'stripe',
-            'shipping' => session('checkout.delivery'),
-        ];
-        session(['checkout.last_order' => $order]);
-
-        return view('checkout', [
-            'step'     => 4,
-            'order'    => $order,
-            'cart'     => [],
-            'totals'   => ['subtotal' => $order['total'], 'total' => $order['total']],
-            'shipping' => $order['shipping'] ?? null,
-        ]);
-    }
-
-    return redirect()->route('checkout.index')->with('error', 'Paiement non confirmé.');
-}
 
 
 public function handle(Request $request)

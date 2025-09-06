@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\Request;
 
 class WelcomeController extends Controller
 {
@@ -33,7 +33,7 @@ class WelcomeController extends Controller
         ->orderBy('name')
         ->get(['id', 'name']);
 
-        // Calculer le nombre total de produits pour chaque catégorie (incluant les enfants)
+        // Total produits (incluant les enfants)
         $categories->each(function ($category) {
             $childrenProductsCount = 0;
             if ($category->children) {
@@ -44,6 +44,36 @@ class WelcomeController extends Controller
             $category->total_products_count = $category->direct_products_count + $childrenProductsCount;
         });
 
-        return view('welcome', compact('categories'));
+        // ✅ Produits à afficher dans la landing page
+
+        $products = Product::where('is_active', true)
+            ->orderByDesc('likes_count')
+            ->take(10)
+            ->get(['id', 'name', 'description', 'price', 'discount_price', 'currency', 'images', 'stock', 'is_active']);
+
+        $featured = Product::where('is_active', true)
+            ->where('is_featured', true)
+            ->latest()
+            ->take(8)
+            ->get();
+
+        $promos = Product::where('is_active', true)
+            ->whereNotNull('discount_price')
+            ->orderByRaw('(price - discount_price) desc')
+            ->take(6)
+            ->get();
+
+        $latest = Product::where('is_active', true)
+            ->latest()
+            ->take(6)
+            ->get();
+
+        return view('welcome', compact(
+            'categories',
+            'products',   // populaires
+            'featured',   // vedettes
+            'promos',     // en promo
+            'latest'      // nouveautés
+        ));
     }
 }

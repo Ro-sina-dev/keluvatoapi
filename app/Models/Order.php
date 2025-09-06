@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-        'user_id','status','currency','subtotal','shipping','tax','total',
+        'user_id','number','status','currency','subtotal','shipping','tax','total',
         'shipping_address','billing_address',
+         'payment_provider','stripe_session_id','stripe_payment_intent','paid_at',
     ];
 
     protected $casts = [
@@ -18,6 +19,7 @@ class Order extends Model
         'shipping' => 'decimal:2',
         'tax' => 'decimal:2',
         'total' => 'decimal:2',
+          'paid_at'          => 'datetime',
     ];
 
     public function user() {

@@ -327,3 +327,66 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ===============================
+           Orders page responsiveness
+           (non-intrusive, override-only)
+        =============================== */
+        .orders-section .order-header {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .orders-section .order-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .orders-section .order-summary {
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .orders-section .order-summary {
+                flex-direction: column;
+                text-align: left;
+            }
+        }
+
+        /* Make filter group scroll on small screens */
+        .order-filters .filter-group {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .order-filters .filter-group::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .order-filters .filter-group::-webkit-scrollbar-thumb {
+            background: #cfd8dc;
+            border-radius: 999px;
+        }
+
+        @media (max-width: 768px) {
+            .order-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-orders {
+                width: 100%;
+            }
+            .search-orders input {
+                width: 100% !important;
+            }
+        }
+
+        /* Reinforce product item width on small screens (JS also adjusts inline width) */
+        @media (max-width: 768px) {
+            .order-products .product-item {
+                width: 100% !important;
+            }
+        }

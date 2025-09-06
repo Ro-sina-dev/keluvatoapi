@@ -340,17 +340,17 @@ $toUrl = function ($v) use ($ABSOLUTE, $host) {
             <div class="grid">
                 @forelse($products as $p)
                  @php
-    // images -> array (supporte JSON stocké en BDD)
-    $imgs = is_array($p->images) ? $p->images : (json_decode($p->images ?? '[]', true) ?: []);
+                    // images -> array (supporte JSON stocké en BDD)
+                    $imgs = is_array($p->images) ? $p->images : (json_decode($p->images ?? '[]', true) ?: []);
 
-    // image principale normalisée (absolue si $ABSOLUTE = true)
-    $img = !empty($imgs[0])
-        ? $toUrl($imgs[0])
-        : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80&auto=format&fit=crop';
+                    // image principale normalisée (absolue si $ABSOLUTE = true)
+                    $img = !empty($imgs[0])
+                        ? $toUrl($imgs[0])
+                        : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80&auto=format&fit=crop';
 
-    $hasPromo = !is_null($p->discount_price);
-    $display  = $hasPromo ? $p->discount_price : $p->price;
-@endphp
+                    $hasPromo = !is_null($p->discount_price);
+                    $display  = $hasPromo ? $p->discount_price : $p->price;
+                @endphp
 
 
 
@@ -390,7 +390,7 @@ $toUrl = function ($v) use ($ABSOLUTE, $host) {
                                     <span>👁 <span data-view-count-inline>{{ $p->views_count }}</span></span>
                                 </div>
                                 <button class="btn-add-to-cart" type="button" data-id="{{ $p->id }}"
-                                    data-name="{{ $p->name }}" data-price="{{ $display }} "
+                                    data-name="{{ $p->name }}"
                                     data-image="{{ $img }}
 
                                 ">Ajouter au
@@ -850,7 +850,7 @@ $toUrl = function ($v) use ($ABSOLUTE, $host) {
                         updateCartDisplay();
                         checkoutModal.style.display = "block";
                     } else {
-                        window.location.href = "checkout.html";
+                        window.location.href = "{{ route('checkout.index') }}";
                     }
                 });
             }

@@ -29,2224 +29,1365 @@
     <meta name="twitter:description"
         content="Découvrez nos meubles, décorations et solutions de bricolage pour embellir votre maison." />
     <meta name="twitter:image" content="{{ asset('assets/images/og-image.jpg') }}" />
-     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <!-- Fonts et icônes externes -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobilia - Boutique de Meubles</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #e67e22;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --text: #333;
+            --text-light: #f9f9f9;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7f9;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 5%;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+
+        .logo i {
+            margin-right: 10px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--light);
+            padding: 10px 15px;
+            border-radius: 30px;
+            width: 40%;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 5px;
+            outline: none;
+        }
+
+        .user-settings {
+            display: flex;
+            align-items: center;
+        }
+
+        .language-currency {
+            display: flex;
+            margin-right: 20px;
+        }
+
+        .select-box {
+            margin-left: 10px;
+            position: relative;
+        }
+
+        .select-box select {
+            padding: 8px 30px 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            appearance: none;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        .select-box i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .cart-icon {
+            position: relative;
+            margin-right: 10px;
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        /* Navigation */
+        .categories-nav {
+            background: white;
+            padding: 15px 5%;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .categories-nav ul {
+            display: inline-flex;
+            list-style: none;
+        }
+
+        .categories-nav li {
+            margin-right: 25px;
+        }
+
+        .categories-nav a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: var(--transition);
+        }
+
+        .categories-nav a:hover,
+        .categories-nav a.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 0 5% 40px;
+        }
+
+        /* Hero Slider */
+        .hero-slider {
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+
+        .slide {
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 0 60px;
+        }
+
+        .slide-1 {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1493663284031-b7e3aaa4c4b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+        }
+
+        .slide-2 {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1524758631624-e2822e304c36?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+        }
+
+        .slide-content {
+            color: white;
+            max-width: 500px;
+        }
+
+        .slide-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .slide-content p {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .slide-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .slide-btn:hover {
+            background: #d35400;
+            transform: translateY(-2px);
+        }
+
+        .slider-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        .dot.active {
+            background: white;
+        }
+
+        /* Section Title */
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title h2 {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .view-all {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .product-price {
+            /* font-size: 1.3rem;*/
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+
+        .product-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .add-to-cart {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 9px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .add-to-cart:hover {
+            background: #d35400;
+        }
+
+        .add-to-cart i {
+            margin-right: 8px;
+        }
+
+        .view-details {
+            background: var(--light);
+            color: var(--text);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .view-details:hover {
+            background: #e5e8eb;
+        }
+
+        /* Promo Banner */
+        .promo-banner {
+            background: linear-gradient(to right, #2c3e50, #4a6491);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 50px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .promo-content h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .promo-content p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            max-width: 600px;
+        }
+
+        .promo-btn {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .promo-btn:hover {
+            background: var(--light);
+            transform: translateY(-2px);
+        }
+
+        /* Cart Modal */
+        .cart-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 380px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .close-cart {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #777;
+        }
+
+        .cart-items {
+            margin-bottom: 25px;
+        }
+
+        .cart-item {
+            display: flex;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item-img {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 15px;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .cart-item-price {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            background: var(--light);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .quantity-input {
+            width: 45px;
+            text-align: center;
+            margin: 0 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 5px;
+        }
+
+        .remove-item {
+            color: var(--danger);
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 15px;
+            font-size: 1.2rem;
+        }
+
+        .cart-summary {
+            padding: 20px;
+            background: var(--light);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .summary-total {
+            font-weight: bold;
+            font-size: 1.3rem;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .checkout-btn:hover {
+            background: #219653;
+        }
+
+        /* Overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .promo-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .promo-content {
+                margin-bottom: 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            .logo {
+                margin-bottom: 15px;
+            }
+
+            .search-box {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+
+            .user-settings {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .slide {
+                padding: 0 30px;
+            }
+
+            .slide-content h2 {
+                font-size: 2rem;
+            }
+
+            .cart-modal {
+                width: 100%;
+            }
+        }
+    </style>
+    <style>
+        /* ===== Hero Slider (responsive) ===== */
+        .hero-slider {
+            position: relative;
+            height: 60vh;
+            /* desktop par défaut */
+            min-height: 360px;
+            /* garde une bonne hauteur même sur petits écrans */
+            max-height: 720px;
+            overflow: hidden;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        /* slide = background-cover responsive */
+        .hero-slider .slide {
+            position: absolute;
+            inset: 0;
+            background-image: var(--bg);
+            background-size: cover;
+            /* couvre tout l’espace */
+            background-position: center;
+            /* centre le crop */
+            background-repeat: no-repeat;
+            opacity: 0;
+            transform: scale(1.02);
+            transition: opacity .6s ease, transform .6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(12px, 3vw, 32px);
+        }
+
+        .hero-slider .slide.active {
+            opacity: 1;
+            transform: scale(1);
+            z-index: 1;
+        }
+
+        /* overlay noir pour lisibilité */
+        .hero-slider .slide::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background: rgba(0, 0, 0, .55);
+        }
+
+        /* conteneur texte */
+        .slide-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: min(90vw, 860px);
+            text-align: center;
+        }
+
+        .slide-content h2 {
+            font-size: clamp(22px, 4vw, 44px);
+            line-height: 1.15;
+            margin: 0 0 10px;
+        }
+
+        .slide-content p {
+            font-size: clamp(13px, 2.1vw, 18px);
+            line-height: 1.6;
+            margin: 0 0 16px;
+            color: #f2f2f2;
+            max-width: 65ch;
+            margin-inline: auto;
+        }
+
+        .slide-btn {
+            display: inline-block;
+            background: #ff6600;
+            color: #fff;
+            text-decoration: none;
+            padding: clamp(10px, 1.8vw, 14px) clamp(16px, 2.6vw, 22px);
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: clamp(13px, 1.8vw, 16px);
+            white-space: nowrap;
+            /* ✅ évite que le bouton casse en 2 lignes */
+        }
+
+        /* animation d'entrée du texte */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(18px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .slide.active .slide-content>* {
+            opacity: 0;
+            animation: fadeUp .6s both ease-out;
+        }
+
+        .slide.active .slide-content h2 {
+            animation-delay: .10s
+        }
+
+        .slide.active .slide-content p {
+            animation-delay: .22s
+        }
+
+        .slide.active .slide-content .slide-btn {
+            animation-delay: .34s
+        }
+
+        /* Dots */
+        .slider-dots {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: clamp(10px, 2.4vw, 22px);
+            display: flex;
+            gap: 10px;
+            z-index: 3;
+        }
+
+        .slider-dots .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            opacity: .45;
+            cursor: pointer;
+            transition: opacity .2s ease, transform .2s ease;
+            touch-action: manipulation;
+        }
+
+        .slider-dots .dot.active {
+            opacity: 1;
+            transform: scale(1.08);
+        }
+
+        /* ===== Breakpoints ===== */
+
+        /* Tablette */
+        @media (max-width: 992px) {
+            .hero-slider {
+                height: 50vh;
+                min-height: 320px;
+            }
+
+            .slide-content {
+                max-width: min(92vw, 720px);
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 640px) {
+            .hero-slider {
+                height: 42vh;
+                min-height: 260px;
+            }
+
+            /* ✅ réduit encore */
+            .hero-slider .slide::before {
+                background: rgba(0, 0, 0, .65);
+            }
+
+            .slide-content {
+                padding-inline: 8px;
+            }
+
+            .slide-content h2 {
+                font-size: 1.4rem;
+            }
+
+            /* ✅ réduit les titres */
+            .slide-content p {
+                font-size: 0.9rem;
+            }
+
+            /* ✅ réduit les textes */
+            .slide-btn {
+                font-size: 0.8rem;
+                padding: 8px 14px;
+            }
+
+            .slider-dots .dot {
+                width: 9px;
+                height: 9px;
+            }
+        }
+
+        /* Desktop large */
+        @media (min-width: 1100px) {
+            .hero-slider .slide {
+                justify-content: flex-start;
+            }
+
+            .slide-content {
+                text-align: left;
+                margin-left: clamp(40px, 8vw, 120px);
+            }
+
+            .slide-content p {
+                margin-inline: 0;
+            }
+        }
+
+        /* Accessibilité */
+        @media (prefers-reduced-motion: reduce) {
+
+            .hero-slider .slide,
+            .slide-content>* {
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+    </style>
+
 </head>
 
-
 <body>
+    @include('partials.header')
     <!-- Header -->
-     @include('partials.header')
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <!-- Conteneur YouTube optimisé -->
-        <div class="youtube-container">
-            <iframe
-                src="https://www.youtube.com/embed/kOTx437PvOQ?autoplay=1&mute=1&loop=1&playlist=kOTx437PvOQ&controls=0&modestbranding=1&rel=0&enablejsapi=1"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen loading="lazy"
-                title="Présentation Keluvato - Décoration & Meubles d'Exception"></iframe>
-        </div>
-
-        <!-- Overlay semi-transparent -->
-        <div class="hero-overlay"></div>
-
-        <!-- Contenu texte -->
-        <div class="hero-content">
-            <h1 data-i18n="hero_title">Décoration & Meubles d'Exception</h1>
-            <p data-i18n="hero_description">
-                Découvrez notre collection exclusive de meubles et accessoires pour
-                votre intérieur et extérieur
-            </p>
-            <a href="{{ route('products.discover') }}" class="btn btn-primary" data-i18n="hero_btn">
-                Découvrir la collection
-            </a>
-        </div>
-    </section>
 
 
-    <div class="container">
-        <h2 class="section-title"></h2>
+    <!-- Navigation (catégories dynamiques) -->
+    <div class="categories-nav">
+        <ul id="catChips">
+            <li>
+                <a href="{{ route('home') }}" class="chip {{ request()->is('/') ? 'active' : '' }}" data-id="">
+                    Tous
+                </a>
+            </li>
 
-        <!-- 1) Catégories = BOUTONS (pas d'images) -->
-        <div id="categoriesContainer">
-            <div id="categoriesGrid"
-                style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
-                <!-- rempli en JS -->
-            </div>
-        </div>
-
-        <!-- 2) Résultats : SOUS-CATÉGORIES + PRODUITS (avec images) -->
-        <div id="resultsView" style="display:none; margin-top:18px;">
-            <div
-                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
-                <h2 class="section-title" id="resultsTitle" style="margin:0; flex-grow:1;"></h2>
-                <button id="backBtn"
-                    style="border:1px solid #ddd; background:#fff; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px; color:#444;">
-                    ← Retour aux catégories
-                </button>
-            </div>
-            <div id="resultsWrapper" style="display:flex; flex-direction:column; gap:22px;">
-                <!-- sections sous-catégories + produits -->
-            </div>
-        </div>
-
-        <!-- 3) Page produit (détail) -->
-        <div id="pageView" style="display:none; margin-top:18px;"></div>
+            @foreach ($categories ?? collect() as $c)
+                @php
+                    $count = $c->total_products_count ?? ($c->direct_products_count ?? 0);
+                @endphp
+                <li>
+                    <a href="{{ url('/categorie/' . $c->id) }}"
+                        class="chip {{ request()->is('categorie/' . $c->id) ? 'active' : '' }}"
+                        data-id="{{ $c->id }}">
+                        {{ $c->name }}
+                        @if ($count > 0)
+                            <span class="chip-count">{{ $count }}</span>
+                        @endif
+                    </a>
+                </li>
+            @endforeach
+        </ul>
     </div>
 
+    <style>
 
-
-
-    <!-- Modern Coupon Section with Angled Cards -->
-    <div class="container" style="position: relative; margin: 80px auto; padding: 40px 0">
-        <div class="angled-feature-container"
-            style="
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 30px;
-          flex-wrap: wrap;
-        ">
-            <!-- Left Angled Card - Camera Feature -->
-            <div class="angled-card left-tilt"
-                style="
-            width: 280px;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transform: rotate(-5deg);
-            transition: all 0.4s ease;
-          ">
-                <div class="icon-circle"
-                    style="
-              width: 70px;
-              height: 70px;
-              background: linear-gradient(135deg, #4a6bff, #6b8cff);
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              margin: 0 auto 20px;
-            ">
-                    <i class="fas fa-camera" style="font-size: 28px; color: white"></i>
-                </div>
-                <h3 style="text-align: center; margin-bottom: 15px; color: #292f36">
-                    Mesure 3D Intelligente
-                </h3>
-                <p style="text-align: center; color: #666; line-height: 1.5">
-                    Prenez la mesure de votre espace puis partager avec nous
-                </p>
-            </div>
-
-            <!-- Central Coupon Card -->
-            <div class="coupon-section"
-                style="
-            z-index: 2;
-            width: 320px;
-            background: linear-gradient(135deg, #4a6bff, #4ecdc4);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 15px 40px rgba(74, 107, 255, 0.3);
-            text-align: center;
-          ">
-                <h2 style="margin-bottom: 15px; font-size: 1.8rem">
-                    CODE PROMO EXCLUSIF
-                </h2>
-                <p style="margin-bottom: 10px; font-size: 1.1rem">
-                    Profitez de 15% de réduction
-                </p>
-                <div class="coupon-code"
-                    style="
-              background: white;
-              color: #4a6bff;
-              padding: 12px;
-              border-radius: 6px;
-              font-weight: 700;
-              font-size: 1.5rem;
-              margin: 20px auto;
-              display: inline-block;
-              min-width: 180px;
-            ">
-                    KELU15
-                </div>
-                <p style="font-size: 0.9rem; opacity: 0.9">
-                    Valable jusqu'au 30/12/2023
-                </p>
-            </div>
-
-            <!-- Right Angled Card - Loyalty Points -->
-            <div class="angled-card right-tilt"
-                style="
-            width: 280px;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transform: rotate(5deg);
-            transition: all 0.4s ease;
-          ">
-                <div class="icon-circle"
-                    style="
-              width: 70px;
-              height: 70px;
-              background: linear-gradient(135deg, #4ecdc4, #6ad9d1);
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              margin: 0 auto 20px;
-            ">
-                    <i class="fas fa-gift" style="font-size: 28px; color: white"></i>
-                </div>
-                <h3 style="text-align: center; margin-bottom: 15px; color: #292f36">
-                    Points Fidélité
-                </h3>
-                <p style="text-align: center; color: #666; line-height: 1.5">
-                    Cumulez des points à chaque achat et bénéficiez d'avantages
-                    exclusifs et de réductions spéciales.
-                </p>
-            </div>
-        </div>
-    </div>
-
-
-
-
-    <!-- Featured Products -->
-    <div class="container">
-        <h2 class="section-title">Nos Nouveautés</h2>
-
-        <div class="products">
-            <div class="product-card">
-                <div class="product-img"
-                    style="
-              background-image: url('https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');
-            ">
-                    <button class="like-btn"><i class="far fa-heart"></i></button>
-                    <span class="product-badge">Nouveau</span>
-                </div>
-                <div class="product-info">
-                    <h3>Canapé en velours bleu</h3>
-
-                    <div class="product-price">
-                        <span class="price-now" data-price="245.00" data-currency="EUR"></span>
-                        &nbsp;<span class="old-price" data-price="999.99" data-currency="EUR"></span>
-                    </div>
-
-                    <button class="btn-add-to-cart" data-id="1" data-name="Canapé en velours bleu"
-                        data-price="799.99" data-currency="EUR">
-                        Ajouter au panier
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card">
-                <div class="product-img"
-                    style="
-              background-image: url('https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');
-            ">
-                    <button class="like-btn"><i class="far fa-heart"></i></button>
-                    <span class="product-badge">-30%</span>
-                </div>
-                <div class="product-info">
-                    <h3>Table basse en chêne</h3>
-
-                    <div class="product-price">
-                        <span class="price-now" data-price="249.99" data-currency="EUR"></span>
-                        &nbsp;<span class="old-price" data-price="349.99" data-currency="EUR"></span>
-                    </div>
-
-                    <button class="btn-add-to-cart" data-id="2" data-name="Table basse en chêne"
-                        data-price="249.99" data-currency="EUR">
-                        Ajouter au panier
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card">
-                <div class="product-img"
-                    style="
-              background-image: url('https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');
-            ">
-                    <button class="like-btn"><i class="far fa-heart"></i></button>
-                </div>
-                <div class="product-info">
-                    <h3>Lampe design</h3>
-                    <div class="product-price">
-                        <span class="price-now" data-price="248.99" data-currency="EUR"></span>
-                        &nbsp;<span class="old-price" data-price="349.99" data-currency="EUR"></span>
-                    </div>
-                    <button class="btn-add-to-cart" data-id="3" data-name="Lampe design" data-price="129.99"
-                        data-currency="EUR">
-                        Ajouter au panier
-                    </button>
-                </div>
-            </div>
-
-            <!--  <div class="product-card">
-                <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
-                    <button class="like-btn"><i class="far fa-heart"></i></button>
-                    <span class="product-badge">Bestseller</span>
-                </div>
-                <div class="product-info">
-                    <h3>Perceuse sans fil</h3>
-                    <div class="product-price">€89.99</div>
-                    <button class="btn-add-to-cart" data-id="4" data-name="Perceuse sans fil" data-price="89.99">Ajouter au panier</button>
-                </div>
-            </div> -->
-        </div>
-    </div>
-    <!-- Full-width Advertisement Section -->
-    <section class="full-width-ad"
-        style="
-        margin: 60px 0;
-        padding: 80px 20px;
-        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
-          url('https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80');
-        background-size: cover;
-        background-position: center;
-        color: white;
-        text-align: center;
-        position: relative;
-      ">
-        <div class="container"
-            style="
-          position: relative;
-          z-index: 2;
-          max-width: 1200px;
-          margin: 0 auto;
-        ">
-            <h2
-                style="
-            font-size: 2.2rem;
-            margin-bottom: 15px;
-            font-weight: 600;
-            animation: fadeInUp 1s ease-out;
-          ">
-                INSTALLEZ-VOUS CONFORTABLEMENT
-            </h2>
-
-            <h3
-                style="
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            font-weight: 400;
-            animation: fadeInUp 1s ease-out 0.2s;
-          ">
-                Canapé design
-            </h3>
-
-            <div
-                style="
-            height: 2px;
-            width: 100px;
-            background: var(--primary);
-            margin: 20px auto;
-            animation: zoomIn 1s ease-out 0.4s;
-          ">
-            </div>
-
-            <p
-                style="
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            animation: fadeInUp 1s ease-out 0.6s;
-          ">
-                à partir de 149 000 FCFA
-            </p>
-
-            <a href="#" class="btn-ad"
-                style="
-            display: inline-block;
-            padding: 12px 30px;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            border-radius: 30px;
-            font-weight: 600;
-            transition: all 0.3s;
-            animation: fadeIn 1s ease-out 0.8s;
-          ">
-                J'EN PROFITE
-                <i class="fas fa-arrow-right" style="margin-left: 8px"></i>
-            </a>
-        </div>
-    </section>
-
-    <section class="blog-section">
-        <div class="container">
-            <h2 class="section-title">Articles populaires</h2>
-
-            <div class="blog-posts">
-                <!-- Blog Card 1 -->
-                <div class="blog-card">
-                    <a href="product-details.html">
-                        <div class="blog-img"
-                            style="
-                  background-image: url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80');
-                ">
-                        </div>
-                    </a>
-                    <div class="blog-content">
-                        <h3>Fauteuil design</h3>
-                        <div class="blog-price">49 000 FCFA</div>
-                    </div>
-                </div>
-                <div class="blog-card">
-                    <a href="product-details.html">
-                        <div class="blog-img"
-                            style="
-                  background-image: url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80');
-                ">
-                        </div>
-                    </a>
-                    <div class="blog-content">
-                        <h3>Fauteuil design</h3>
-                        <div class="blog-price">49 000 FCFA</div>
-                    </div>
-                </div>
-
-                <!-- Blog Card 2 -->
-                <div class="blog-card">
-                    <a href="product-details.html">
-                        <div class="blog-img"
-                            style="
-                  background-image: url('https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=600&q=80');
-                ">
-                        </div>
-                    </a>
-                    <div class="blog-content">
-                        <h3>Lampe moderne</h3>
-                        <div class="blog-price">12 500 FCFA</div>
-                    </div>
-                </div>
-
-                <!-- Blog Card 3 -->
-                <div class="blog-card">
-                    <a href="product-details.html">
-                        <div class="blog-img"
-                            style="
-                  background-image: url('https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=80');
-                ">
-                        </div>
-                    </a>
-                    <div class="blog-content">
-                        <h3>Table basse bois</h3>
-                        <div class="blog-price">35 000 FCFA</div>
-                    </div>
-                </div>
-
-                <!-- Blog Card 4 -->
-                <div class="blog-card">
-                    <a href="product-details.html">
-                        <div class="blog-img"
-                            style="
-                  background-image: url('https://images.unsplash.com/photo-1523413651479-597eb2da0ad6?auto=format&fit=crop&w=600&q=80');
-                ">
-                        </div>
-                    </a>
-                    <div class="blog-content">
-                        <h3>Plante décorative</h3>
-                        <div class="blog-price">8 000 FCFA</div>
-                    </div>
-                </div>
-
-                <!-- Blog Card 5 -->
-                <div class="blog-card">
-                    <a href="product-details.html">
-                        <div class="blog-img"
-                            style="
-                  background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80');
-                ">
-                        </div>
-                    </a>
-                    <div class="blog-content">
-                        <h3>Chaise scandinave</h3>
-                        <div class="blog-price">18 000 FCFA</div>
-                    </div>
-                </div>
-
-                <!-- Blog Card 6 -->
-                <div class="blog-card">
-                    <a href="product-details.html">
-                        <div class="blog-img"
-                            style="
-                  background-image: url('https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=600&q=80');
-                ">
-                        </div>
-                    </a>
-                    <div class="blog-content">
-                        <h3>Horloge murale</h3>
-                        <div class="blog-price">6 500 FCFA</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Newsletter -->
-    <section class="newsletter"
-        style="
-        padding: 5rem 0;
-        margin: 4rem 0;
-        position: relative;
-        overflow: hidden;
-      ">
-        <div class="container"
-            style="
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 20px;
-          position: relative;
-          z-index: 2;
-        ">
-            <div
-                style="
-            background: rgba(255, 255, 255, 0.1);
-            background: linear-gradient(135deg, #4a6bff 0%, #3a1c71 100%);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2.5rem;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-          ">
-                <h2
-                    style="
-              color: white;
-              font-size: 2.5rem;
-              margin-bottom: 1rem;
-              font-weight: 700;
-              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-              font-family: 'Montserrat', sans-serif;
-            ">
-                    Ne manquez aucune offre exceptionnelle !
-                </h2>
-                <p
-                    style="
-              color: rgba(255, 255, 255, 0.9);
-              font-size: 1.2rem;
-              max-width: 600px;
-              margin: 0 auto 2rem;
-              font-family: 'Montserrat', sans-serif;
-            ">
-                    Rejoignez notre communauté et bénéficiez de
-                    <span style="font-weight: bold; color: #fff">10% de réduction</span>
-                    immédiate + des surprises exclusives chaque semaine !
-                </p>
-
-                <form class="newsletter-form" style="display: flex; max-width: 500px; margin: 0 auto; gap: 10px">
-                    <input type="email" placeholder="Votre adresse email" required
-                        style="
-                flex: 1;
-                padding: 15px 20px;
-                border: none;
-                border-radius: 50px;
-                font-size: 1rem;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-                font-family: 'Montserrat', sans-serif;
-              " />
-                    <button type="submit"
-                        style="
-                background: linear-gradient(to right, #4a6bff, #4ecdc4);
-                color: white;
-                border: none;
-                padding: 0 30px;
-                border-radius: 50px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: all 0.3s;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-                font-size: 1rem;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                font-family: 'Montserrat', sans-serif;
-              ">
-                        Je profite des offres
-                    </button>
-                </form>
-
-                <p
-                    style="
-              color: rgba(255, 255, 255, 0.7);
-              font-size: 0.8rem;
-              margin-top: 1.5rem;
-              font-family: 'Montserrat', sans-serif;
-            ">
-                    * Nous détestons le spam autant que vous. Désabonnez-vous à tout
-                    moment.
-                </p>
-            </div>
-        </div>
-
-        <!-- Éléments décoratifs modifiés -->
-        <div
-            style="
-          position: absolute;
-          top: -50px;
-          right: -50px;
-          width: 200px;
-          height: 200px;
-          background: rgba(74, 107, 255, 0.1);
-          border-radius: 50%;
-        ">
-        </div>
-        <div
-            style="
-          position: absolute;
-          bottom: -80px;
-          left: -80px;
-          width: 250px;
-          height: 250px;
-          background: rgba(78, 205, 196, 0.08);
-          border-radius: 50%;
-        ">
-        </div>
-    </section>
-
-
-    <!-- Floating Buttons -->
-    <!-- Floating Buttons -->
-    <div class="floating-buttons">
-        <button id="arMeasureBtn" class="floating-btn"
-            style="background: linear-gradient(to right, #4a6bff, #6b8cff)" title="Mesurer votre espace">
-            <i class="fas fa-ruler-combined text-xl"></i>
-        </button>
-
-        <button class="floating-btn" style="background: linear-gradient(to right, #4ecdc4, #6ad9d1)"
-            title="Cagnotte commune">
-            <i class="fas fa-gift text-xl"></i>
-        </button>
-        <!-- Chat button -->
-        <button id="chatBtn" class="floating-btn" style="background: linear-gradient(to right, #038a40, #037c1d)"
-            title="Chat en direct">
-            <i class="fas fa-comments text-xl"></i>
-        </button>
-    </div>
-
-    <!-- Chat Modal -->
-    <div id="chatModal" class="chat-modal">
-        <div class="chat-header">
-            Assistant Virtuel
-            <span id="closeChat" class="close-btn">&times;</span>
-        </div>
-        <div class="chat-body" id="chatBody">
-            <div class="chat-message bot">
-                Bonjour ! Comment puis-je vous aider ?
-            </div>
-        </div>
-        <div class="chat-input">
-            <input type="text" id="chatInput" placeholder="Écrivez votre message..." />
-            <button id="sendBtn">Envoyer</button>
-        </div>
-    </div>
-
-    <!-- 2. AJOUTEZ CES DIVs DANS VOTRE <BODY> (après vos boutons flottants) -->
-    <div id="arContainer" class="hidden">
-        <video id="videoStream" autoplay muted playsinline></video>
-
-        <div class="ar-overlay" id="arOverlay">
-            <div class="crosshair"></div>
-        </div>
-
-        <div class="measurement-info">
-            <h3 style="margin-bottom: 15px; color: #4a6bff">
-                <i class="fas fa-ruler"></i> Mesures
-            </h3>
-            <div class="info-item">
-                <span>Points placés:</span>
-                <span id="pointCount">0</span>
-            </div>
-            <div class="info-item">
-                <span>Dernière mesure:</span>
-                <span id="lastMeasurement">-</span>
-            </div>
-            <div class="info-item">
-                <span>Total mesures:</span>
-                <span id="totalMeasurements">0</span>
-            </div>
-            <div id="instructionText"
-                style="
-            margin-top: 15px;
-            padding: 10px;
-            background: rgba(74, 107, 255, 0.1);
-            border-radius: 8px;
-            font-size: 12px;
-            color: #4a6bff;
-          ">
-                📍 Cliquez sur le premier coin, puis sur le second pour mesurer la
-                distance
-            </div>
-        </div>
-
-        <div class="controls-panel">
-            <button class="control-btn primary" id="addPointBtn">
-                <i class="fas fa-plus"></i>
-                Ajouter Point
-            </button>
-            <button class="control-btn secondary" id="clearBtn">
-                <i class="fas fa-trash"></i>
-                Effacer
-            </button>
-            <button class="control-btn" id="switchCameraBtn"
-                style="background: linear-gradient(135deg, #ff9f43, #feca57)">
-                <i class="fas fa-sync-alt"></i>
-                Changer Caméra
-            </button>
-            <button class="control-btn success" id="sendMeasurementsBtn">
-                <i class="fas fa-paper-plane"></i>
-                Envoyer
-            </button>
-            <button class="control-btn" id="closeArBtn" style="background: #636e72">
-                <i class="fas fa-times"></i>
-                Fermer
-            </button>
-        </div>
-    </div>
-
-    <div id="statusIndicator" class="status-indicator hidden">
-        <div class="loading-spinner"></div>
-        <div id="statusText">Initialisation de la caméra...</div>
-    </div>
-
-
+    </style>
     <script>
-        // Menus User & Aide — version simple et robuste
-        (function() {
-            const userToggle = document.getElementById("userToggle");
-            const dropdownUser = document.getElementById("dropdownUser");
-            const helpToggle = document.getElementById("helpToggle");
-            const dropdownHelp = document.getElementById("dropdownHelp");
-
-            function toggle(el) {
-                if (!el) return;
-                el.style.display = el.style.display === "block" ? "none" : "block";
-            }
-
-            function hideAll() {
-                [dropdownUser, dropdownHelp].forEach((d) => {
-                    if (d) d.style.display = "none";
+        document.addEventListener('DOMContentLoaded', () => {
+            const chips = document.querySelectorAll('#catChips .chip');
+            chips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    chips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    // on laisse le navigateur suivre le lien /categorie/{id}
+                    // si tu préfères charger dynamiquement: empêche le défaut et appelle openCategory(...)
                 });
-            }
-
-            if (userToggle && dropdownUser) {
-                userToggle.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    hideAll();
-                    toggle(dropdownUser);
-                });
-            }
-            if (helpToggle && dropdownHelp) {
-                helpToggle.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    hideAll();
-                    toggle(dropdownHelp);
-                });
-            }
-
-            document.addEventListener("click", hideAll);
-        })();
+            });
+        });
     </script>
 
-
-
-    <script>
-        (function() {
-            const input = document.getElementById('searchInput');
-            const btn = document.getElementById('searchBtn');
-            const dd = document.getElementById('searchDropdown');
-
-            let cursor = -1; // index sélection clavier
-            let items = []; // cache items affichés
-            let lastQ = '';
-            const DEBOUNCE_MS = 180;
-
-            // util: debounce
-            const debounce = (fn, ms) => {
-                let t;
-                return (...args) => {
-                    clearTimeout(t);
-                    t = setTimeout(() => fn(...args), ms);
-                };
-            };
-
-            // util: première image
-            const firstImage = (images) => {
-                if (!images) return '';
-                if (Array.isArray(images) && images[0]) return images[0];
-                if (typeof images === 'string') {
-                    try {
-                        const arr = JSON.parse(images);
-                        if (Array.isArray(arr) && arr[0]) return arr[0];
-                    } catch (e) {}
-                }
-                return '';
-            };
-
-            // rendu dropdown
-            function render(q, data) {
-                items = data || [];
-                cursor = -1;
-
-                if (!q || !items.length) {
-                    dd.innerHTML = q ? `
-      <div class="search-empty">Aucun résultat pour “${escapeHtml(q)}”.</div>` : '';
-                    dd.style.display = q ? 'block' : 'none';
-                    if (q) dd.innerHTML += footer(q, 0);
-                    return;
-                }
-
-                const html = [
-                    ...items.map((p, i) => {
-                        const img = firstImage(p.images) || 'https://via.placeholder.com/80x80?text=—';
-                        const price = (p.price != null) ? `${Number(p.price).toFixed(2)} ${p.currency || ''}` :
-                            '';
-                        return `
-          <div class="search-item" data-index="${i}" data-id="${p.id}">
-            <img class="search-thumb" src="${img}" alt="">
-            <div>
-              <div class="search-title">${escapeHtml(p.name)}</div>
-              <div class="search-price">${escapeHtml(price)}</div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Hero Slider -->
+        <!-- Hero Slider -->
+        <div class="hero-slider" id="heroSlider">
+            <!-- Slide 1 -->
+            <div class="slide" style="--bg:url('{{ asset('assets/renaii.jpg') }}')">
+                <div class="overlay"></div>
+                <div class="slide-content">
+                    <h2>Collection Printemps </h2>
+                    <p>Découvrez nos nouvelles arrivées avec des designs uniques et des matériaux écologiques.</p>
+                    <a href="{{ route('products.discover') }}" class="slide-btn">Voir la collection</a>
+                </div>
             </div>
-          </div>
-        `;
-                    })
-                ].join('');
 
-                dd.innerHTML = html + footer(q, items.length);
-                dd.style.display = 'block';
+            <!-- Slide 2 -->
+            <div class="slide" style="--bg:url('{{ asset('assets/renai.jpg') }}')">
+                <div class="overlay"></div>
+                <div class="slide-content">
+                    <h2>Mobilier Haut de Gamme</h2>
+                    <p>Un confort absolu pour sublimer votre intérieur.</p>
+                    <a href="{{ route('products.discover') }}" class="slide-btn">Explorer</a>
+                </div>
+            </div>
 
-                // Bind click
-                dd.querySelectorAll('.search-item').forEach(el => {
-                    el.addEventListener('click', () => {
-                        const id = el.getAttribute('data-id');
-                        goToProduct(id);
-                    });
-                });
+            <!-- Dots -->
+            <div class="slider-dots" id="sliderDots"></div>
+        </div>
 
-                // “Voir tous les résultats”
-                const allLink = dd.querySelector('#searchSeeAll');
-                if (allLink) allLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    goToResults(q);
-                });
-            }
 
-            //function footer(q, count) {
-            // return `
-        //  <div class="search-footer">
-        //   <span>${count} résultat${count>1?'s':''}</span>
-        //  <a href="#" id="searchSeeAll">Voir tous les résultats pour “${escapeHtml(q)}”</a>
-        // </div>
-        //`;
-            //}
+        <!-- Section Titre -->
+        <div class="section-title">
+            <h2>Meubles Populaires</h2>
+            <a href="{{ route('products.discover') }}" class="view-all">Voir tout</a>
+        </div>
 
-            // sécurité HTML
-            function escapeHtml(s) {
-                return String(s).replace(/[&<>"']/g, m => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                } [m]));
-            }
-
-            // navigation
-            function goToProduct(id) {
-                if (!id) return;
-                window.location.href = `product.html?id=${encodeURIComponent(id)}`;
-            }
-
-            function goToResults(q) {
-                // page résultats de ton choix
-                window.location.href = `recherche.html?q=${encodeURIComponent(q)}`;
-            }
-
-            // fetch suggestions
-            const doSearch = debounce(async (q) => {
-                q = q.trim();
-                lastQ = q;
-                if (!q) {
-                    dd.style.display = 'none';
-                    dd.innerHTML = '';
-                    return;
-                }
-
-                try {
-                    const res = await fetch(`${apiBase}/search?q=${encodeURIComponent(q)}`, {
-                        headers: {
-                            Accept: 'application/json'
-                        }
-                    });
-                    const data = await res.json();
-                    // si l’utilisateur a déjà tapé autre chose, on ignore
-                    if (q !== lastQ) return;
-                    render(q, Array.isArray(data) ? data : []);
-                } catch (e) {
-                    console.error(e);
-                    render(q, []);
-                }
-            }, DEBOUNCE_MS);
-
-            // events
-            input.addEventListener('input', (e) => doSearch(e.target.value));
-            input.addEventListener('focus', () => {
-                if (input.value.trim()) doSearch(input.value);
-            });
-
-            // bouton loupe = page résultats complète
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const q = input.value.trim();
-                if (!q) return;
-                goToResults(q);
-            });
-
-            // clavier: Entrée / Échap / ↑ / ↓
-            input.addEventListener('keydown', (e) => {
-                if (dd.style.display !== 'block') return;
-                const max = items.length - 1;
-
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    cursor = (cursor < max) ? cursor + 1 : 0;
-                    updateActive();
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    cursor = (cursor > 0) ? cursor - 1 : max;
-                    updateActive();
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (cursor >= 0 && items[cursor]) goToProduct(items[cursor].id);
-                    else if (input.value.trim()) goToResults(input.value.trim());
-                } else if (e.key === 'Escape') {
-                    dd.style.display = 'none';
-                }
-            });
-
-            function updateActive() {
-                dd.querySelectorAll('.search-item').forEach((el, i) => {
-                    if (i === cursor) {
-                        el.classList.add('active');
-                        el.scrollIntoView({
-                            block: 'nearest'
-                        });
-                    } else {
-                        el.classList.remove('active');
+        <!-- Grille de produits -->
+        <div class="products-grid">
+            @php
+                $toUrl = function ($v) {
+                    $v = is_string($v) ? trim($v) : '';
+                    if ($v === '') {
+                        return '';
                     }
-                });
-            }
 
-            // fermer si clic dehors
-            document.addEventListener('click', (e) => {
-                if (!dd.contains(e.target) && e.target !== input) {
-                    dd.style.display = 'none';
-                }
-            });
-        })();
-    </script>
+                    // URL absolue (http/https/protocole-less) ou data URI -> on renvoie tel quel
+                    if (preg_match('#^(https?://|//|data:)#i', $v)) {
+                        return $v;
+                    }
+
+                    // Si une URL locale a été stockée, on enlève juste l’hôte 127.0.0.1/localhost
+                    $v = preg_replace('#^https?://(127\.0\.0\.1(:\d+)?|localhost(:\d+)?)#i', '', $v);
+
+                    // Normalise les slashes
+                    $v = ltrim($v, '/');
+
+                    // Déjà préfixé par "storage/" (public/storage symlink) -> renvoie "/storage/..."
+                    if (str_starts_with($v, 'storage/')) {
+                        return '/' . $v;
+                    }
+
+                    // Certains stockent "public/..." -> translate vers URL publique
+                    if (str_starts_with($v, 'public/')) {
+                        $v = substr($v, 7); // enlève "public/"
+                    }
+
+                    // Cas général: fichier sur le disque "public"
+                    return \Illuminate\Support\Facades\Storage::disk('public')->url($v);
+                };
+            @endphp
 
 
+            @forelse($products->take(10) as $p)
+                @php
+                    $imgs = is_array($p->images) ? $p->images : (json_decode($p->images ?? '[]', true) ?: []);
+                    $img = !empty($imgs[0]) ? $toUrl($imgs[0]) : 'https://via.placeholder.com/400x300?text=Image';
+                    $hasPromo = !is_null($p->discount_price);
+                    $priceDisplay = $hasPromo ? $p->discount_price : $p->price;
+                @endphp
 
+                <div class="product-card">
+                    <div class="product-img-wrapper" style="position: relative;">
+                        <img src="{{ $img }}" alt="{{ $p->name }}" class="product-img" loading="lazy">
+
+                        <!-- ❤️ Coeur de like -->
+                        <button class="like-btn"
+                            style="
+                            position: absolute;
+                            top: 10px;
+                            right: 10px;
+                            background: white;
+                            border: none;
+                            border-radius: 50%;
+                            width: 36px;
+                            height: 36px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                            cursor: pointer;
+                        "
+                            data-id="{{ $p->id }}">
+                            <i class="fa{{ $p->liked_by_user ? 's' : 'r' }} fa-heart"></i>
+                        </button>
+
+                        <!-- Badge promo / vedette -->
+                        @if ($hasPromo)
+                            <span
+                                class="product-badge">-{{ number_format((1 - $p->discount_price / $p->price) * 100, 0) }}%</span>
+                        @elseif ($p->is_featured)
+                            <span class="product-badge">Vedette</span>
+                        @endif
+                    </div>
+
+                    <div class="product-info">
+                        <div class="product-header"
+                            style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                            <h3 class="product-title" style="margin:0;font-size:1rem;flex:1;">
+                                {{ $p->name }}
+                            </h3>
+                            <div class="product-price" style="white-space:nowrap;">
+                                <span class="price-now" style="color:#595959;font-weight:100;">
+                                    {{ number_format($priceDisplay, 0, ',', ' ') }} {{ $p->currency ?? 'FCFA' }}
+                                </span>
+                                @if ($hasPromo)
+                                    <span class="old-price"
+                                        style="text-decoration:line-through;color:#888;margin-left:6px;">
+                                        {{ number_format($p->price, 0, ',', ' ') }} {{ $p->currency ?? 'FCFA' }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="product-actions" style="margin-top:0px;">
+                            <button
+                                class="btn-add-to-cart add-to-cart"
+                                type="button"
+                                data-id="{{ $p->id }}"
+                                data-name="{{ $p->name }}"
+
+                                data-image="{{ $img }}"
+                                data-currency="{{ $p->currency ?? 'FCFA' }}"
+                            >
+                                <i class="fas fa-cart-plus"></i> Ajouter
+                            </button>
+
+                            <a href="{{ route('products.show', $p->id) }}" class="view-details">Détails</a>
+                            </div>
+
+                    </div>
+
+                </div>
+            @empty
+                <p>Aucun produit populaire trouvé.</p>
+            @endforelse
+        </div>
+
+
+        <!-- Promo Banner -->
+        <div class="promo-banner">
+            <div class="promo-content">
+                <h2>Soldes d'Été - Jusqu'à 30% de réduction</h2>
+                <p>Profitez de nos offres spéciales sur une sélection de meubles design. Livraison gratuite à partir de
+                    499€ d'achat.</p>
+                <button class="promo-btn">Voir les offres</button>
+            </div>
+            <div class="promo-image">
+                <!-- This would typically be an image -->
+            </div>
+        </div>
+
+        <!-- New Arrivals -->
+        <div class="section-title">
+            <h2>Nouveautés</h2>
+            <a href="{{ route('products.discover') }}" class="view-all">Voir tout</a>
+        </div>
+
+        <!-- Grille de produits (Nouveautés depuis la BDD) -->
+        <div class="products-grid">
+            @php
+                // Helper URL d'image (local/prod)
+$toUrl = function ($v) {
+    if (!$v) {
+        return '';
+    }
+    $v = preg_replace('#^https?://(127\.0\.0\.1(:\d+)?|localhost(:\d+)?)#i', '', $v ?? '');
+    if (preg_match('#^(https?://|data:)#i', $v)) {
+        return $v;
+    }
+    if (strpos($v, '/storage/') === 0) {
+        return $v;
+    }
+    return \Illuminate\Support\Facades\Storage::url(ltrim($v, '/'));
+                };
+            @endphp
+
+            @forelse(($latest ?? collect())->take(5) as $p)
+                @php
+                    $imgs = is_array($p->images) ? $p->images : (json_decode($p->images ?? '[]', true) ?: []);
+                    $img = !empty($imgs[0]) ? $toUrl($imgs[0]) : 'https://via.placeholder.com/400x300?text=Image';
+                    $hasPromo = !is_null($p->discount_price ?? null);
+                    $priceDisplay = $hasPromo ? $p->discount_price : $p->price;
+                @endphp
+
+                <div class="product-card card" data-id="{{ $p->id }}">
+                    <div class="product-img-wrapper" style="position: relative;">
+                        <img src="{{ $img }}" alt="{{ $p->name }}" class="product-img"
+                            loading="lazy">
+
+                        <!-- ❤️ Coeur de like -->
+                        <button class="like-btn" aria-label="Ajouter {{ $p->name }} aux favoris"
+                            style="
+                            position:absolute;top:10px;right:10px;background:#fff;border:none;border-radius:50%;
+                            width:36px;height:36px;box-shadow:0 2px 8px rgba(0,0,0,.1);cursor:pointer;">
+                            <i class="far fa-heart"></i>
+                        </button>
+
+                        <!-- Badge promo / vedette -->
+                        @if ($hasPromo)
+                            <span class="product-badge">
+                                -{{ number_format((1 - $p->discount_price / $p->price) * 100, 0) }}%
+                            </span>
+                        @elseif(!empty($p->is_featured))
+                            <span class="product-badge">Vedette</span>
+                        @endif
+                    </div>
+
+                    <div class="product-info">
+                        <div class="product-header"
+                            style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                            <h3 class="product-title" style="margin:0;font-size:1rem;flex:1;">
+                                {{ $p->name }}
+                            </h3>
+                            <div class="product-price" style="white-space:nowrap;">
+                                <span class="price-now" style="color:#595959;font-weight:100;">
+                                    {{ number_format($priceDisplay, 0, ',', ' ') }} {{ $p->currency ?? 'FCFA' }}
+                                </span>
+                                @if ($hasPromo)
+                                    <span class="old-price"
+                                        style="text-decoration:line-through;color:#888;margin-left:6px;">
+                                        {{ number_format($p->price, 0, ',', ' ') }} {{ $p->currency ?? 'FCFA' }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="product-actions" style="margin-top:0px;">
+                            <button class="btn-add-to-cart add-to-cart" type="button" data-id="{{ $p->id }}"
+                                data-name="{{ $p->name }}"
+
+                                data-image="{{ $img }}"
+                                data-currency="{{ $p->currency ?? 'FCFA' }}"
+                                >
+                                <i class="fas fa-cart-plus"></i> Ajouter
+                            </button>
+
+                            <a href="{{ route('products.show', $p->id) }}" class="view-details">Détails</a>
+                        </div>
+
+                    </div>
+
+                </div>
+            @empty
+                <p>Aucune nouveauté pour le moment.</p>
+            @endforelse
+        </div>
+
+    </div>
     <script>
         (function() {
             const CART_KEY = "cart";
             let cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
- cvxvvbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-            // DOM
-            const cartLink = document.getElementById("cart-link");
-            const cartCountEl = cartLink ?
-                cartLink.querySelector(".cart-count") :
-                null;
-            const checkoutModal = document.getElementById("checkout-modal");
-            const closeModal = checkoutModal ?
-                checkoutModal.querySelector(".close-modal") :
-                null;
-            const cartItemsContainer = document.getElementById("cart-items");
-            const subtotalElement = document.getElementById("subtotal");
-            const totalElement = document.getElementById("total");
+            const euro = n => `€${Number(n).toFixed(2)}`;
+            const money = (n, cur) => `${Number(n).toFixed(2)} ${cur || ''}`.trim();
+            const saveCart = () => localStorage.setItem(CART_KEY, JSON.stringify(cart));
 
-            // Utils
-            const euro = (n) => `€${Number(n).toFixed(2)}`;
-            const saveCart = () =>
-                localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            const cartLink = document.getElementById("cart-link");
+            const cartCountEl = cartLink ? cartLink.querySelector(".cart-count") : null;
 
             function updateCartCount() {
                 if (!cartCountEl) return;
-                const totalItems = cart.reduce((t, i) => t + i.quantity, 0);
-                cartCountEl.textContent = totalItems;
+                cartCountEl.textContent = cart.reduce((t, i) => t + i.quantity, 0);
             }
 
-            function updateCartDisplay() {
-                if (!cartItemsContainer || !subtotalElement || !totalElement) return;
-
-                cartItemsContainer.innerHTML = "";
-                if (cart.length === 0) {
-                    cartItemsContainer.innerHTML = "<p>Votre panier est vide.</p>";
-                    subtotalElement.textContent = euro(0);
-                    totalElement.textContent = euro(0);
-                    return;
-                }
-
-                let subtotal = 0;
-                cart.forEach((item) => {
-                    const itemTotal = item.price * item.quantity;
-                    subtotal += itemTotal;
-
-                    const row = document.createElement("div");
-                    row.className = "summary-item";
-                    row.innerHTML = `<span>${item.name} x${item.quantity
-                        }</span><span>${euro(itemTotal)}</span>`;
-                    cartItemsContainer.appendChild(row);
-                });
-
-                subtotalElement.textContent = euro(subtotal);
-                totalElement.textContent = euro(subtotal);
-            }
-
-            // Ajouter au panier
-            document.querySelectorAll(".btn-add-to-cart").forEach((btn) => {
+            // ✅ Écoute .btn-add-to-cart ET .add-to-cart
+            document.querySelectorAll(".btn-add-to-cart, .add-to-cart").forEach(btn => {
                 btn.addEventListener("click", () => {
                     const id = btn.getAttribute("data-id");
-                    const name = btn.getAttribute("data-name");
-                    const price = parseFloat(btn.getAttribute("data-price") || "0");
+                    const name = btn.getAttribute("data-name") || "Produit";
+                    const img = btn.getAttribute("data-image") || "";
+                    const cur = btn.getAttribute("data-currency") || "FCFA";
 
-                    const existing = cart.find((i) => i.id === id);
-                    if (existing) existing.quantity += 1;
-                    else cart.push({
-                        id,
-                        name,
-                        price,
-                        quantity: 1
-                    });
+                    // data-price doit déjà être un nombre (on l’a mis en Blade)
+                    let price = parseFloat(btn.getAttribute("data-price") || "0");
+                    if (Number.isNaN(price)) price = 0;
 
+                    const existing = cart.find(i => String(i.id) === String(id));
+                    if (existing) {
+                        existing.quantity += 1;
+                    } else {
+                        cart.push({
+                            id,
+                            name,
+                            price,
+                            currency: cur,
+                            image: img,
+                            quantity: 1
+                        });
+                    }
                     saveCart();
                     updateCartCount();
-                    alert(`${name} a été ajouté à votre panier !`);
+
+                    // petit feedback
+                    if (window.showToast) {
+                        showToast(`${name} ajouté au panier`);
+                    } else {
+                        alert(`${name} a été ajouté à votre panier !`);
+                    }
                 });
             });
 
-            // Clic sur l'icône Panier
-            if (cartLink) {
-                cartLink.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    const userToken = localStorage.getItem("userToken");
-
-                    // Non connecté → login
-                    if (!userToken) {
-                        window.location.href = "{{ route('login') }}";
-                        return;
-                    }
-
-                    // Connecté → modal si présent, sinon page panier
-                    if (checkoutModal) {
-                        updateCartDisplay();
-                        checkoutModal.style.display = "block";
-                    } else {
-                        window.location.href = "checkout.html";
-                    }
-                });
-            }
-
-            // Fermeture du modal
-            if (closeModal && checkoutModal) {
-                closeModal.addEventListener(
-                    "click",
-                    () => (checkoutModal.style.display = "none")
-                );
-                window.addEventListener("click", (e) => {
-                    if (e.target === checkoutModal)
-                        checkoutModal.style.display = "none";
-                });
-            }
-
-            // Init compteur
+            // (optionnel) si tu as déjà le code du modal/checkout, garde-le tel quel
             updateCartCount();
         })();
     </script>
 
-    <script src="js/app-auth.js" defer></script>
+    <!-- Cart Modal -->
+    <div class="cart-modal" id="cart-modal">
+        <div class="cart-header">
+            <h2>Votre Panier</h2>
+            <button class="close-cart" id="close-cart">&times;</button>
+        </div>
 
-    <!-- À placer juste avant </body> pour optimiser le chargement -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ asset('js/google-translate.js') }}"></script>
+        <div class="cart-items">
+            <!-- Cart items will be added here dynamically -->
+        </div>
 
-    <script src="js/cart-core.js" defer></script>
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Sous-total</span>
+                <span id="cart-subtotal">0 €</span>
+            </div>
+            <div class="summary-row">
+                <span>Livraison</span>
+                <span>49 €</span>
+            </div>
+            <div class="summary-row summary-total">
+                <span>Total</span>
+                <span id="cart-total">0 €</span>
+            </div>
+        </div>
 
-    <!-- Script pour affichage des catégories et produits depuis la BD -->
+        <button class="checkout-btn">Procéder au Paiement</button>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Données des catégories passées depuis le contrôleur
-        @if(isset($categories))
-        const categories = @json($categories);
-        @else
-        const categories = [];
-        @endif
+        // Cart functionality
+        const cart = [];
+        const cartIcon = document.getElementById('cart-icon');
+        const cartModal = document.getElementById('cart-modal');
+        const closeCart = document.getElementById('close-cart');
+        const overlay = document.getElementById('overlay');
+        const cartItems = document.querySelector('.cart-items');
+        const cartSubtotal = document.getElementById('cart-subtotal');
+        const cartTotal = document.getElementById('cart-total');
+        const cartCount = document.querySelector('.cart-count');
 
-        // DOM elements
-        const grid = document.getElementById('categoriesGrid');
-        const viewCat = document.getElementById('categoriesContainer');
-        const viewRes = document.getElementById('resultsView');
-        const viewPg = document.getElementById('pageView');
-        const backBtn = document.getElementById('backBtn');
-        const resultsTitle = document.getElementById('resultsTitle');
-        const resultsWrapper = document.getElementById('resultsWrapper');
+        // Add to cart buttons
+        const addToCartButtons = document.querySelectorAll('.add-to-cart');
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const id = button.getAttribute('data-id');
+                const name = button.getAttribute('data-name');
+                const price = parseFloat(button.getAttribute('data-price'));
+                const img = button.getAttribute('data-img');
 
-        // Afficher les catégories au chargement
-        renderCategories();
+                // Check if product already in cart
+                const existingItem = cart.find(item => item.id === id);
 
-        // Event listeners
-        if (backBtn) {
-            backBtn.addEventListener('click', showCategories);
-        }
-
-        function renderCategories() {
-            if (!grid) return;
-            
-            grid.innerHTML = '';
-            categories.forEach(category => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.style.cssText = `
-                    text-align:left;background:#fff;border:1px solid #e5e7eb;border-radius:100px;
-                    padding:12px;cursor:pointer;transition:background .15s, box-shadow .15s; font-size:15px;
-                `;
-                
-                const productCount = category.total_products_count || category.direct_products_count || 0;
-                btn.innerHTML = `
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-                        <span>${category.name}</span>
-                        ${productCount > 0 ? `<span style="color:#6b7280;font-size:13px;">${productCount}</span>` : ''}
-                    </div>
-                `;
-                
-                btn.addEventListener('mouseenter', () => btn.style.boxShadow = '0 6px 16px rgba(0,0,0,.06)');
-                btn.addEventListener('mouseleave', () => btn.style.boxShadow = '');
-                btn.addEventListener('click', () => {
-                    window.location.href = `/categorie/${category.id}`;
-                });
-                
-                grid.appendChild(btn);
-            });
-        }
-
-        function openCategory(category) {
-            showResults();
-            resultsTitle.textContent = `Catégorie: ${category.name}`;
-            resultsWrapper.innerHTML = '<div style="text-align:center;padding:20px;color:#666;">Chargement des produits...</div>';
-            
-            // Simuler le chargement des produits (à remplacer par un appel vers votre endpoint)
-            setTimeout(() => {
-                displayCategoryProducts(category);
-            }, 500);
-        }
-
-        function displayCategoryProducts(category) {
-            resultsWrapper.innerHTML = '';
-            
-            // Section pour la catégorie principale
-            const section = document.createElement('section');
-            const mainProducts = category.products || [];
-            
-            section.innerHTML = `
-                <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 8px;">
-                    <h3 style="margin:0;font-size:1.05rem;">${category.name}</h3>
-                    <span style="color:#6b7280;font-size:.9rem;">${mainProducts.length} produit(s)</span>
-                </div>
-                <div class="products-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
-                    ${mainProducts.length > 0 ? '' : '<div style="grid-column:1/-1;color:#6b7280;text-align:center;padding:20px;">Aucun produit dans cette catégorie.</div>'}
-                </div>
-            `;
-            
-            const mainGrid = section.querySelector('.products-grid');
-            mainProducts.forEach(product => {
-                mainGrid.appendChild(createProductCard(product));
-            });
-            
-            resultsWrapper.appendChild(section);
-
-            // Afficher les sous-catégories s'il y en a
-            if (category.children && category.children.length > 0) {
-                category.children.forEach(child => {
-                    const childProducts = child.products || [];
-                    const childSection = document.createElement('section');
-                    childSection.innerHTML = `
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 8px;">
-                            <h3 style="margin:0;font-size:1.05rem;">${child.name}</h3>
-                            <span style="color:#6b7280;font-size:.9rem;">${childProducts.length} produit(s)</span>
-                        </div>
-                        <div class="products-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
-                            ${childProducts.length > 0 ? '' : '<div style="grid-column:1/-1;color:#6b7280;text-align:center;padding:20px;">Aucun produit dans cette sous-catégorie.</div>'}
-                        </div>
-                    `;
-                    
-                    const childGrid = childSection.querySelector('.products-grid');
-                    childProducts.forEach(product => {
-                        childGrid.appendChild(createProductCard(product));
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        id,
+                        name,
+                        price,
+                        img,
+                        quantity: 1
                     });
-                    
-                    resultsWrapper.appendChild(childSection);
-                });
-            }
-        }
+                }
 
-        function createProductCard(product) {
-            const img = (product.images && product.images.length > 0) ? product.images[0] : 'https://picsum.photos/600/400';
-            const price = product.price ? Number(product.price).toFixed(2) : '0.00';
-            const currency = product.currency || 'EUR';
-            
-            const card = document.createElement('div');
-            card.style.cssText = `
-                background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;
-                display:flex;flex-direction:column;transition:transform 0.2s, box-shadow 0.2s;
-            `;
-            
-            card.innerHTML = `
-                <div style="height:140px;background:url('${img}') center/cover;"></div>
-                <div style="padding:10px;display:flex;flex-direction:column;gap:6px;">
-                    <div style="font-weight:600;line-height:1.3;">${product.name || 'Produit'}</div>
-                    <div style="color:#111827;font-size:1.1rem;font-weight:700;">${price} ${currency}</div>
-                    ${product.stock != null ? `<div style="color:${product.stock > 0 ? '#059669' : '#dc2626'};font-size:.9rem;">${product.stock > 0 ? `En stock (${product.stock})` : 'Rupture de stock'}</div>` : ''}
-                    ${product.description ? `<div style="color:#666;font-size:.9rem;line-height:1.3;margin-top:4px;">${product.description.substring(0, 80)}${product.description.length > 80 ? '...' : ''}</div>` : ''}
-                    <div style="display:flex;gap:8px;margin-top:8px;">
-                        <button class="view-product" data-id="${product.id}" style="flex:1;text-align:center;border:1px solid #ddd;background:#fff;border-radius:8px;padding:6px 8px;cursor:pointer;color:#111;">Voir détails</button>
-                        <button class="add-to-cart" data-product='${JSON.stringify({id: product.id, name: product.name, price: Number(price), currency: currency})}' ${product.stock === 0 ? 'disabled' : ''}
-                            style="flex:1;border:0;background:#111;color:#fff;border-radius:8px;padding:6px 8px;cursor:pointer;opacity:${product.stock === 0 ? '.5' : '1'};">
-                            Ajouter
-                        </button>
+                updateCart();
+                alert('Produit ajouté au panier!');
+            });
+        });
+
+        // Open cart
+        cartIcon.addEventListener('click', () => {
+            cartModal.style.display = 'block';
+            overlay.style.display = 'block';
+        });
+
+        // Close cart
+        closeCart.addEventListener('click', () => {
+            cartModal.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        // Close cart when clicking on overlay
+        overlay.addEventListener('click', () => {
+            cartModal.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        // Update cart
+        function updateCart() {
+            // Clear cart items
+            cartItems.innerHTML = '';
+
+            let total = 0;
+            let itemCount = 0;
+
+            // Add items to cart
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                itemCount += item.quantity;
+
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.innerHTML = `
+                    <img src="${item.img}" alt="${item.name}" class="cart-item-img">
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">${item.name}</div>
+                        <div class="cart-item-price">${item.price} €</div>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn decrease" data-id="${item.id}">-</button>
+                            <input type="number" class="quantity-input" value="${item.quantity}" min="1" data-id="${item.id}">
+                            <button class="quantity-btn increase" data-id="${item.id}">+</button>
+                            <button class="remove-item" data-id="${item.id}"><i class="fas fa-trash"></i></button>
+                        </div>
                     </div>
-                </div>
-            `;
-            
-            // Effet hover
-            card.addEventListener('mouseenter', () => {
-                card.style.transform = 'translateY(-2px)';
-                card.style.boxShadow = '0 8px 25px rgba(0,0,0,.1)';
+                `;
+
+                cartItems.appendChild(cartItem);
             });
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'translateY(0)';
-                card.style.boxShadow = '';
-            });
-            
-            // Event listeners pour les boutons
-            const addToCartBtn = card.querySelector('.add-to-cart');
-            if (addToCartBtn && product.stock > 0) {
-                addToCartBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const productData = JSON.parse(addToCartBtn.getAttribute('data-product'));
-                    // Ajouter au panier (utilise le système de panier existant)
-                    if (typeof addToCart === 'function') {
-                        addToCart(productData);
-                    }
-                    showToast('Produit ajouté au panier');
-                });
-            }
-            
-            return card;
-        }
 
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.textContent = message;
-            toast.style.cssText = `
-                position:fixed; bottom:20px; right:20px; z-index:9999;
-                background:#111; color:#fff; padding:12px 16px; border-radius:8px; 
-                box-shadow:0 8px 24px rgba(0,0,0,.2); font-size:14px;
-            `;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
-        }
+            // Update totals
+            cartSubtotal.textContent = `${total} €`;
+            cartTotal.textContent = `${total + 49} €`;
+            cartCount.textContent = itemCount;
 
-        function showCategories() {
-            if (viewPg) viewPg.style.display = 'none';
-            if (viewRes) viewRes.style.display = 'none';
-            if (viewCat) viewCat.style.display = 'block';
-        }
-
-        function showResults() {
-            if (viewPg) viewPg.style.display = 'none';
-            if (viewCat) viewCat.style.display = 'none';
-            if (viewRes) viewRes.style.display = 'block';
-        }
-    });
+            // Add event listeners to quantity buttons
+            const decreaseButtons = document.querySelectorAll('.decrease');
+            const increaseButtons = document.querySelectorAll('.increase');
+            const removeButtons =
     </script>
 
-
-
-
-
-
-<script>
-        // Script pour gérer l'affichage mobile
-        document.addEventListener("DOMContentLoaded", function() {
-            // Gestion du menu burger
-            const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
-            const mobileMenuModal = document.getElementById("mobileMenuModal");
-            const closeMobileMenu = document.getElementById("closeMobileMenu");
-
-            if (mobileMenuToggle && mobileMenuModal) {
-                mobileMenuToggle.addEventListener("click", function() {
-                    mobileMenuModal.style.display = "block";
-                    document.body.style.overflow = "hidden";
-                });
-            }
-
-            if (closeMobileMenu && mobileMenuModal) {
-                closeMobileMenu.addEventListener("click", function() {
-                    mobileMenuModal.style.display = "none";
-                    document.body.style.overflow = "auto";
-                });
-            }
-
-            // Fermer le modal si on clique en dehors
-            mobileMenuModal.addEventListener("click", function(e) {
-                if (e.target === mobileMenuModal) {
-                    mobileMenuModal.style.display = "none";
-                    document.body.style.overflow = "auto";
-                }
-            });
-
-            // Gestion des menus déroulants desktop
-            const toggleButtons = document.querySelectorAll('[id$="Toggle"]');
-            toggleButtons.forEach((button) => {
-                button.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                    const dropdownId = this.id.replace("Toggle", "");
-                    const dropdown = document.getElementById(dropdownId);
-                    const isVisible = dropdown.style.display === "block";
-
-                    // Fermer tous les autres menus
-                    document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                        if (menu.id !== dropdownId) {
-                            menu.style.display = "none";
-                        }
-                    });
-
-                    // Basculer l'affichage du menu courant
-                    dropdown.style.display = isVisible ? "none" : "block";
-                });
-            });
-
-            // Fermer les menus déroulants quand on clique ailleurs
-            document.addEventListener("click", function() {
-                document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                    menu.style.display = "none";
-                });
-            });
-
-            // Empêcher la fermeture quand on clique dans le menu
-            document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-                menu.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                });
-            });
-
-            // Fonction pour changer la langue
-            window.changeLanguage = function(lang) {
-                console.log("Changement de langue vers:", lang);
-                // Ici vous ajouteriez la logique pour changer la langue
-                document.querySelectorAll(".language-code").forEach((el) => {
-                    el.textContent = lang.toUpperCase();
-                });
-                document.getElementById("mobileMenuModal").style.display = "none";
-                document.body.style.overflow = "auto";
-            };
-        });
-
-
-
-
-
-
-
-
-
-
-
-
-        let lastScrollTop = 0;
-        const header = document.getElementById("mainHeader");
-
-        window.addEventListener("scroll", function() {
-            const scrollTop =
-                window.pageYOffset || document.documentElement.scrollTop;
-
-            if (scrollTop > lastScrollTop) {
-                // On descend → cacher le header
-                header.style.top = "-150px"; // adapte cette valeur à la hauteur de ton header
-            } else {
-                // On remonte → afficher le header
-                header.style.top = "0";
-            }
-
-            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // pour éviter valeurs négatives
-        });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // Chargement différé pour améliorer les performances
-        document.addEventListener("DOMContentLoaded", function() {
-            const iframe = document.querySelector(".youtube-container iframe");
-            iframe.setAttribute("src", iframe.getAttribute("src"));
-        });
-
-
-
-
-
-        // Liste complète des pays (exemple partiel)
-        const countrie = [{
-                code: "FR",
-                name: "France",
-                currency: "EUR",
-                symbol: "€",
-                flag: "fr",
-            },
-            {
-                code: "DE",
-                name: "Allemagne",
-                currency: "EUR",
-                symbol: "€",
-                flag: "de",
-            },
-            {
-                code: "US",
-                name: "États-Unis",
-                currency: "USD",
-                symbol: "$",
-                flag: "us",
-            },
-            // ... autres pays ...
-        ];
-
-        // Dictionnaire de traduction
-        const translations = {
-            fr: {
-                search_placeholder: "Rechercher des meubles, décoration...",
-                select_country: "Sélectionnez votre pays",
-                search_country: "Rechercher un pays...",
-            },
-            en: {
-                search_placeholder: "Search for furniture, decor...",
-                select_country: "Select your country",
-                search_country: "Search for a country...",
-            },
-            es: {
-                search_placeholder: "Buscar muebles, decoración...",
-                select_country: "Selecciona tu país",
-                search_country: "Buscar un país...",
-            },
-        };
-
-        // Langue par défaut
-        let currentLanguage = "fr";
-
-        // Fonction pour changer la langue
-        function changeLanguage(lang) {
-            currentLanguage = lang;
-            document.querySelector(".language-code").textContent =
-                lang.toUpperCase();
-            document.getElementById("dropdownLanguage").style.display = "none";
-
-            // Mettre à jour les textes traduits
-            document.querySelectorAll(".translate").forEach((el) => {
-                const key = el.getAttribute("data-key");
-                el.textContent = translations[lang][key] || translations["fr"][key];
-            });
-
-            // Mettre à jour le placeholder de recherche
-            document.querySelector(".search-container input").placeholder =
-                translations[lang]["search_placeholder"];
-            document.getElementById("countrySearch").placeholder =
-                translations[lang]["search_country"];
-
-            // Sauvegarder la préférence
-            localStorage.setItem("preferredLanguage", lang);
-        }
-
-        // Initialisation
-        document.addEventListener("DOMContentLoaded", function() {
-            // Récupérer la langue sauvegardée ou détecter la langue du navigateur
-            const savedLanguage = localStorage.getItem("preferredLanguage");
-            const browserLanguage = navigator.language.slice(0, 2);
-
-            if (savedLanguage) {
-                changeLanguage(savedLanguage);
-            } else if (translations[browserLanguage]) {
-                changeLanguage(browserLanguage);
-            }
-
-            // Gestion des menus déroulants
-            const languageToggle = document.getElementById("languageToggle");
-            const dropdownLanguage = document.getElementById("dropdownLanguage");
-
-            languageToggle.addEventListener("click", (e) => {
-                e.stopPropagation();
-                dropdownLanguage.style.display =
-                    dropdownLanguage.style.display === "block" ? "none" : "block";
-            });
-
-            document.addEventListener("click", (e) => {
-                if (!e.target.closest(".language-dropdown")) {
-                    dropdownLanguage.style.display = "none";
-                }
-            });
-
-            // ... (le reste de votre code existant pour les pays) ...
-        });
-
-        // ... (le reste de votre code JavaScript existant) ...
-
-
-
-
-
-
-
-
-
-
-
-        // Gestion du menu mobile
-        document.addEventListener("DOMContentLoaded", function() {
-            const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
-            const mobileMenuModal = document.getElementById("mobileMenuModal");
-            const closeMobileMenu = document.getElementById("closeMobileMenu");
-            const mobileMenuBack = document.getElementById("mobileMenuBack");
-            const mobileMainMenu = document.getElementById("mobileMainMenu");
-            const helpMenu = document.getElementById("helpMenu");
-            const regionMenu = document.getElementById("regionMenu");
-            const menuSections = document.querySelectorAll(".mobile-menu-section");
-
-            // Ouvrir/fermer le menu mobile
-            if (mobileMenuToggle) {
-                mobileMenuToggle.addEventListener("click", function() {
-                    mobileMenuModal.style.display = "block";
-                    document.body.style.overflow = "hidden";
-                });
-            }
-
-            closeMobileMenu.addEventListener("click", function() {
-                mobileMenuModal.style.display = "none";
-                document.body.style.overflow = "";
-            });
-
-            // Navigation dans les sous-menus
-            menuSections.forEach((section) => {
-                section.addEventListener("click", function() {
-                    const target = this.getAttribute("data-target");
-                    document.getElementById(target).style.display = "block";
-                    mobileMainMenu.style.display = "none";
-                    mobileMenuBack.style.display = "block";
-                });
-            });
-
-            // Bouton retour
-            mobileMenuBack.addEventListener("click", function() {
-                mobileMainMenu.style.display = "block";
-                helpMenu.style.display = "none";
-                regionMenu.style.display = "none";
-                this.style.display = "none";
-            });
-
-            // Annuler les paramètres régionaux
-            document
-                .querySelector(".cancel-region")
-                ?.addEventListener("click", function() {
-                    mobileMainMenu.style.display = "block";
-                    regionMenu.style.display = "none";
-                    mobileMenuBack.style.display = "none";
-                });
-
-            // Soumission des paramètres régionaux
-            document
-                .getElementById("mobileRegionForm")
-                ?.addEventListener("submit", function(e) {
-                    e.preventDefault();
-
-                    const formData = new FormData(this);
-                    const currency = formData.get("currency");
-                    const country = formData.get("country");
-                    const language = formData.get("language");
-
-                    // Sauvegarder les préférences
-                    localStorage.setItem(
-                        "userSettings",
-                        JSON.stringify({
-                            currency: currency,
-                            country: country,
-                            language: language,
-                        })
-                    );
-
-                    // Mettre à jour l'interface
-                    updateRegionalSettings(currency, country, language);
-
-                    // Revenir au menu principal
-                    mobileMainMenu.style.display = "block";
-                    regionMenu.style.display = "none";
-                    mobileMenuBack.style.display = "none";
-
-
-                });
-        });
-
-        function updateRegionalSettings(currency, country, language) {
-            // Mettre à jour les éléments de l'interface en fonction des nouveaux paramètres
-            console.log("Paramètres mis à jour:", {
-                currency,
-                country,
-                language
-            });
-            // Implémentez ici la logique pour mettre à jour votre interface
-        }
-
-
-
-
-
-        // Fonctions pour gérer le modal
-        function openCountryModal() {
-            document.getElementById("dropdownCountry").style.display =
-                "block";
-        }
-
-        function closeCountryModal() {
-            document.getElementById("dropdownCountry").style.display =
-                "none";
-        }
-
-        // Fermer quand on clique sur ×
-        document.querySelector(".close").onclick = closeCountryModal;
-
-        // Fermer quand on clique sur Annuler
-        document.querySelector(".cancel-btn").onclick = closeCountryModal;
-
-        // Fermer quand on clique en dehors du modal
-        window.onclick = function(event) {
-            if (
-                event.target == document.getElementById("dropdownCountry")
-            ) {
-                closeCountryModal();
-            }
-        };
-
-
-
-        document.getElementById("chatBtn").addEventListener("click", () => {
-            document.getElementById("chatModal").style.display = "flex";
-        });
-
-        document.getElementById("closeChat").addEventListener("click", () => {
-            document.getElementById("chatModal").style.display = "none";
-        });
-
-        document.getElementById("sendBtn").addEventListener("click", () => {
-            const input = document.getElementById("chatInput");
-            const message = input.value.trim();
-            if (message !== "") {
-                const chatBody = document.getElementById("chatBody");
-
-                // Message utilisateur
-                const userMsg = document.createElement("div");
-                userMsg.className = "chat-message user";
-                userMsg.textContent = message;
-                chatBody.appendChild(userMsg);
-
-                // Réponse bot simulée
-                const botMsg = document.createElement("div");
-                botMsg.className = "chat-message bot";
-                botMsg.textContent =
-                    "Merci pour votre message, nous vous répondrons bientôt !";
-                chatBody.appendChild(botMsg);
-
-                input.value = "";
-                chatBody.scrollTop = chatBody.scrollHeight;
-            }
-        });
-
-
-
-
-
-
-        class ARMeasurementApp {
-            constructor() {
-                this.isActive = false;
-                this.measurementPoints = [];
-                this.measurements = [];
-                this.pixelsPerMM = 2;
-                this.videoStream = null;
-
-                this.currentFacingMode = "environment"; // Commence par la caméra arrière
-                this.availableCameras = [];
-
-                this.initializeElements();
-                this.bindEvents();
-                this.detectAvailableCameras();
-            }
-
-            initializeElements() {
-                this.elements = {
-                    arBtn: document.getElementById("arMeasureBtn"),
-                    arContainer: document.getElementById("arContainer"),
-                    video: document.getElementById("videoStream"),
-                    overlay: document.getElementById("arOverlay"),
-                    statusIndicator: document.getElementById("statusIndicator"),
-                    statusText: document.getElementById("statusText"),
-                    pointCount: document.getElementById("pointCount"),
-                    lastMeasurement: document.getElementById("lastMeasurement"),
-                    addPointBtn: document.getElementById("addPointBtn"),
-                    clearBtn: document.getElementById("clearBtn"),
-                    sendBtn: document.getElementById("sendMeasurementsBtn"),
-                    closeBtn: document.getElementById("closeArBtn"),
-                    switchCameraBtn: document.getElementById("switchCameraBtn"),
-                    // Nouveaux éléments pour le modal
-                    permissionModal: document.getElementById("cameraPermissionModal"),
-                    allowCameraBtn: document.getElementById("allowCameraBtn"),
-                    denyCameraBtn: document.getElementById("denyCameraBtn"),
-                    closePermissionModal: document.getElementById(
-                        "closePermissionModal"
-                    ),
-                };
-            }
-
-            bindEvents() {
-                if (this.elements.arBtn) {
-                    this.elements.arBtn.addEventListener("click", () => this.startAR());
-                }
-                this.elements.closeBtn.addEventListener("click", () => this.stopAR());
-                this.elements.addPointBtn.addEventListener("click", () =>
-                    this.addMeasurementPoint()
-                );
-                this.elements.clearBtn.addEventListener("click", () =>
-                    this.clearMeasurements()
-                );
-                this.elements.sendBtn.addEventListener("click", () =>
-                    this.sendMeasurements()
-                );
-
-                this.elements.overlay.addEventListener("click", (e) => {
-                    if (this.isActive) {
-                        const rect = this.elements.overlay.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-                        this.addPointAtPosition(x, y);
-                    }
-                });
-            }
-
-            async startAR() {
-                try {
-                    this.showStatus("Demande d'autorisation caméra...");
-
-                    if (
-                        !navigator.mediaDevices ||
-                        !navigator.mediaDevices.getUserMedia
-                    ) {
-                        throw new Error("getUserMedia non supporté par ce navigateur");
-                    }
-
-                    const stream = await navigator.mediaDevices
-                        .getUserMedia({
-                            video: {
-                                facingMode: "environment",
-                                width: {
-                                    ideal: 1920,
-                                    min: 640
-                                },
-                                height: {
-                                    ideal: 1080,
-                                    min: 480
-                                },
-                            },
-                        })
-                        .catch(async (error) => {
-                            if (
-                                error.name === "OverconstrainedError" ||
-                                error.name === "NotFoundError"
-                            ) {
-                                return await navigator.mediaDevices.getUserMedia({
-                                    video: {
-                                        facingMode: "user",
-                                        width: {
-                                            ideal: 1280,
-                                            min: 640
-                                        },
-                                        height: {
-                                            ideal: 720,
-                                            min: 480
-                                        },
-                                    },
-                                });
-                            }
-                            throw error;
-                        });
-
-                    this.videoStream = stream;
-                    this.elements.video.srcObject = stream;
-
-                    await new Promise((resolve, reject) => {
-                        this.elements.video.onloadedmetadata = resolve;
-                        this.elements.video.onerror = reject;
-                        setTimeout(() => reject(new Error("Timeout")), 10000);
-                    });
-
-                    this.elements.arContainer.classList.remove("hidden");
-                    this.hideStatus();
-                    this.isActive = true;
-                    this.calibrateScale();
-                } catch (error) {
-                    console.error("Erreur caméra:", error);
-                    this.handleCameraError(error);
-                }
-            }
-
-            handleCameraError(error) {
-                let message = "";
-                switch (error.name) {
-                    case "NotAllowedError":
-                        message = "🚫 Accès caméra refusé";
-                        break;
-                    case "NotFoundError":
-                        message = "📷 Aucune caméra trouvée";
-                        break;
-                    default:
-                        message = "❌ Erreur caméra";
-                }
-                this.showCameraPermissionDialog(message);
-            }
-
-            showCameraPermissionDialog(message) {
-                const modal = document.createElement("div");
-                modal.style.cssText = `
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(0,0,0,0.9); display: flex; align-items: center;
-                    justify-content: center; z-index: 9999; padding: 20px;
-                `;
-
-                const isChrome = /Chrome/.test(navigator.userAgent);
-                const isFirefox = /Firefox/.test(navigator.userAgent);
-                const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-                let instructions = "";
-                if (isChrome) {
-                    instructions =
-                        "Cliquez sur l'icône 📷 dans la barre d'adresse et autorisez la caméra";
-                } else if (isFirefox) {
-                    instructions = 'Cliquez sur "Autoriser" dans la popup de Firefox';
-                } else {
-                    instructions =
-                        "Autorisez l'accès à la caméra dans votre navigateur";
-                }
-
-                modal.innerHTML = `
-                    <div style="background: white; padding: 30px; border-radius: 20px; max-width: 400px; text-align: center; color: #333;">
-                        <div style="font-size: 60px; margin-bottom: 20px;">📷</div>
-                        <h2 style="color: #ff4757; margin-bottom: 15px;">${message}</h2>
-                        <p style="margin-bottom: 20px;">${instructions}</p>
-                        <div style="background: #fff9c4; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <strong>⚠️ Important :</strong><br>
-                            Vos images ne sont jamais enregistrées ni envoyées.
-                        </div>
-                        <div style="display: flex; gap: 15px; justify-content: center;">
-                            <button onclick="window.location.reload()" style="padding: 15px 25px; background: #4a6bff; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
-                                🔄 Réessayer
-                            </button>
-                            <button onclick="this.parentElement.parentElement.remove()" style="padding: 15px 25px; background: #636e72; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
-                                ❌ Annuler
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                document.body.appendChild(modal);
-                this.hideStatus();
-            }
-
-            stopAR() {
-                if (this.videoStream) {
-                    this.videoStream.getTracks().forEach((track) => track.stop());
-                    this.videoStream = null;
-                }
-                this.elements.arContainer.classList.add("hidden");
-                this.isActive = false;
-                this.clearMeasurements();
-            }
-
-            calibrateScale() {
-                const screenWidth = window.screen.width;
-                const videoWidth = this.elements.video.videoWidth;
-                this.pixelsPerMM = (videoWidth / screenWidth) * 0.5;
-            }
-
-            addPointAtPosition(x, y) {
-                const point = {
-                    id: Date.now(),
-                    x: x,
-                    y: y,
-                    timestamp: new Date()
-                };
-                this.measurementPoints.push(point);
-                this.renderPoint(point);
-
-                if (this.measurementPoints.length >= 2) {
-                    this.calculateAndRenderMeasurement();
-                }
-                this.updateUI();
-            }
-
-            addMeasurementPoint() {
-                const centerX = this.elements.overlay.offsetWidth / 2;
-                const centerY = this.elements.overlay.offsetHeight / 2;
-                this.addPointAtPosition(centerX, centerY);
-            }
-
-            renderPoint(point) {
-                const pointElement = document.createElement("div");
-                pointElement.className = "measurement-point";
-                pointElement.style.left = `${point.x}px`;
-                pointElement.style.top = `${point.y}px`;
-                this.elements.overlay.appendChild(pointElement);
-            }
-
-            calculateAndRenderMeasurement() {
-                const points = this.measurementPoints;
-                if (points.length < 2) return;
-
-                const [point1, point2] = points.slice(-2);
-                const pixelDistance = Math.sqrt(
-                    Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
-                );
-                const realDistance = pixelDistance / this.pixelsPerMM / 10;
-
-                const measurement = {
-                    id: Date.now(),
-                    point1,
-                    point2,
-                    pixelDistance,
-                    realDistance,
-                    timestamp: new Date(),
-                };
-
-                this.measurements.push(measurement);
-                this.renderMeasurementLine(measurement);
-            }
-
-            renderMeasurementLine(measurement) {
-                const {
-                    point1,
-                    point2,
-                    realDistance
-                } = measurement;
-
-                const line = document.createElement("div");
-                line.className = "measurement-line";
-
-                const length = Math.sqrt(
-                    Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
-                );
-                const angle =
-                    (Math.atan2(point2.y - point1.y, point2.x - point1.x) * 180) /
-                    Math.PI;
-
-                line.style.width = `${length}px`;
-                line.style.left = `${point1.x}px`;
-                line.style.top = `${point1.y}px`;
-                line.style.transform = `rotate(${angle}deg)`;
-                line.style.transformOrigin = "0 50%";
-
-                const label = document.createElement("div");
-                label.className = "measurement-label";
-
-                let displayDistance =
-                    realDistance >= 100 ?
-                    `${(realDistance / 100).toFixed(2)} m` :
-                    `${realDistance.toFixed(1)} cm`;
-
-                label.textContent = displayDistance;
-                label.style.left = `${(point1.x + point2.x) / 2}px`;
-                label.style.top = `${(point1.y + point2.y) / 2 - 30}px`;
-
-                this.elements.overlay.appendChild(line);
-                this.elements.overlay.appendChild(label);
-                this.elements.lastMeasurement.textContent = displayDistance;
-            }
-
-            clearMeasurements() {
-                this.measurementPoints = [];
-                this.measurements = [];
-
-                const measurementElements = this.elements.overlay.querySelectorAll(
-                    ".measurement-point, .measurement-line, .measurement-label"
-                );
-                measurementElements.forEach((el) => el.remove());
-                this.updateUI();
-            }
-
-            updateUI() {
-                this.elements.pointCount.textContent = this.measurementPoints.length;
-                const totalMeasurementsEl =
-                    document.getElementById("totalMeasurements");
-                if (totalMeasurementsEl) {
-                    totalMeasurementsEl.textContent = this.measurements.length;
-                }
-
-                const instructionEl = document.getElementById("instructionText");
-                if (instructionEl) {
-                    if (this.measurementPoints.length === 0) {
-                        instructionEl.innerHTML =
-                            "📍 Cliquez sur le <strong>premier coin</strong> à mesurer";
-                        instructionEl.style.color = "#4a6bff";
-                    } else if (this.measurementPoints.length === 1) {
-                        instructionEl.innerHTML =
-                            "📍 Maintenant cliquez sur le <strong>second coin</strong>";
-                        instructionEl.style.color = "#ff4757";
-                    } else {
-                        instructionEl.innerHTML =
-                            "✅ Mesure terminée ! Vous pouvez en ajouter d'autres";
-                        instructionEl.style.color = "#2ed573";
-                    }
-                }
-            }
-
-            async sendMeasurements() {
-                if (this.measurements.length === 0) {
-                    alert("Aucune mesure à envoyer. Ajoutez au moins 2 points.");
-                    return;
-                }
-
-                this.showStatus("📤 Envoi des mesures...");
-
-                const data = {
-                    timestamp: new Date().toISOString(),
-                    measurements: this.measurements.map((m) => ({
-                        realDistance: m.realDistance,
-                        pixelDistance: m.pixelDistance,
-                        timestamp: m.timestamp,
-                    })),
-                    summary: {
-                        totalMeasurements: this.measurements.length,
-                        averageDistance: this.measurements.reduce((sum, m) => sum + m.realDistance, 0) /
-                            this.measurements.length,
-                    },
-                };
-
-                try {
-                    console.log("📊 Données de mesure:", data);
-
-                    // REMPLACEZ PAR VOTRE API :
-                    // const response = await fetch('/api/measurements', {
-                    //     method: 'POST',
-                    //     headers: { 'Content-Type': 'application/json' },
-                    //     body: JSON.stringify(data)
-                    // });
-
-                    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-                    this.showStatus("✅ Mesures envoyées avec succès!");
-                    setTimeout(() => this.hideStatus(), 2000);
-                } catch (error) {
-                    console.error("Erreur envoi:", error);
-                    this.showStatus("❌ Erreur lors de l'envoi");
-                    setTimeout(() => this.hideStatus(), 3000);
-                }
-            }
-
-            showStatus(message) {
-                this.elements.statusText.textContent = message;
-                this.elements.statusIndicator.classList.remove("hidden");
-            }
-
-            hideStatus() {
-                this.elements.statusIndicator.classList.add("hidden");
-            }
-        }
-
-        // Initialisation quand le DOM est prêt
-        document.addEventListener("DOMContentLoaded", () => {
-            new ARMeasurementApp();
-        });
-
-
-
-        // Gestion des likes
-        document.querySelectorAll(".like-btn").forEach((btn) => {
-            btn.addEventListener("click", function() {
-                this.classList.toggle("liked");
-                const icon = this.querySelector("i");
-                if (this.classList.contains("liked")) {
-                    icon.classList.remove("far");
-                    icon.classList.add("fas");
-                } else {
-                    icon.classList.remove("fas");
-                    icon.classList.add("far");
-                }
-            });
-        });
-
-
-        // Appliquer un coupon
-        document
-            .getElementById("apply-coupon")
-            .addEventListener("click", function() {
-                const couponCode = document.getElementById("coupon").value;
-
-                if (couponCode.toUpperCase() === "KELU15") {
-                    const subtotalText = subtotalElement.textContent;
-                    const subtotal = parseFloat(subtotalText.replace("€", ""));
-                    const discount = subtotal * 0.15;
-                    const total = subtotal - discount;
-
-                    // Ajouter la réduction au résumé
-                    const discountElement = document.createElement("div");
-                    discountElement.className = "summary-item";
-                    discountElement.innerHTML = `
-                            <span>Réduction (15%)</span>
-                            <span>-€${discount.toFixed(2)}</span>
-                        `;
-
-                    // Vérifier si la réduction est déjà affichée
-                    if (!document.getElementById("discount-element")) {
-                        discountElement.id = "discount-element";
-                        cartItemsContainer.appendChild(discountElement);
-                    } else {
-                        document.getElementById("discount-element").innerHTML =
-                            discountElement.innerHTML;
-                    }
-
-                    totalElement.textContent = `€${total.toFixed(2)}`;
-                    alert("Code promo appliqué avec succès!");
-                } else {
-                    alert("Code promo invalide");
-                }
-            });
-
-        // Passer à la livraison
-        document
-            .getElementById("proceed-to-checkout")
-            .addEventListener("click", function() {
-                alert("Fonctionnalité de paiement à implémenter");
-                // Ici, vous pourriez ajouter la logique pour passer à l'étape suivante du checkout
-            });
-
-        // Gestion des boutons flottants
-        document
-            .querySelector(".floating-buttons button:nth-child(1)")
-            .addEventListener("click", function() {
-                alert(
-                    "Fonctionnalité de partage sur les réseaux sociaux à implémenter"
-                );
-            });
-
-        document
-            .querySelector(".floating-buttons button:nth-child(2)")
-            .addEventListener("click", function() {
-                alert("Fonctionnalité de cagnotte commune à implémenter");
-            });
-
-        // Redirection vers la page de détails au clic sur l'image du produit
-        document.querySelectorAll(".product-img").forEach((img, index) => {
-            img.style.cursor = "pointer";
-            img.addEventListener("click", function() {
-                // Liste des IDs des produits dans le même ordre qu'ils apparaissent sur la page
-                const productIds = ["1", "2", "3",
-                    "4"
-                ]; // Correspond aux data-id des boutons "Ajouter au panier"
-
-                // Récupérer l'ID du produit correspondant
-                const productId = productIds[index];
-
-                // Rediriger vers la page de détails avec l'ID en paramètre
-                window.location.href = `product-details.html?id=${productId}`;
-            });
-        });
-
-
-        // Navigation entre les étapes
-        document
-            .getElementById("proceed-to-delivery")
-            .addEventListener("click", function() {
-                document.getElementById("checkout-modal").style.display = "none";
-                document.getElementById("delivery-modal").style.display = "block";
-            });
-
-        document
-            .getElementById("proceed-to-payment")
-            .addEventListener("click", function() {
-                document.getElementById("delivery-modal").style.display = "none";
-                document.getElementById("payment-modal").style.display = "block";
-            });
-
-        document
-            .getElementById("confirm-order")
-            .addEventListener("click", function() {
-                document.getElementById("payment-modal").style.display = "none";
-                document.getElementById("confirmation-modal").style.display = "block";
-            });
-
-        // Boutons de retour
-        document
-            .getElementById("back-to-cart")
-            .addEventListener("click", function() {
-                document.getElementById("delivery-modal").style.display = "none";
-                document.getElementById("checkout-modal").style.display = "block";
-            });
-
-        document
-            .getElementById("back-to-delivery")
-            .addEventListener("click", function() {
-                document.getElementById("payment-modal").style.display = "none";
-                document.getElementById("delivery-modal").style.display = "block";
-            });
-
-        document
-            .getElementById("return-to-shop")
-            .addEventListener("click", function() {
-                document.getElementById("confirmation-modal").style.display = "none";
-                // Redirection vers la page d'accueil
-                window.location.href = "/";
-            });
-
-        // Fermeture des modals
-        document.querySelectorAll(".close-modal").forEach(function(btn) {
-            btn.addEventListener("click", function() {
-                this.closest(".modal").style.display = "none";
-            });
-        });
-
-        // Ouverture du modal panier (exemple)
-        function openCartModal() {
-            document.getElementById("checkout-modal").style.display = "block";
-        }
-    </script>
-    <!-- Footer -->
     <!-- Bande d'avantages e-commerce -->
+    <script>
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.toggle('liked');
+                const icon = this.querySelector('i');
+
+                if (this.classList.contains('liked')) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas'); // cœur plein
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far'); // cœur vide
+                }
+            });
+        });
+    </script>
+
+
+
+
     <section class="kv-usp">
         <div class="container kv-usp-wrap">
             <div class="usp"><i class="fas fa-shipping-fast"></i><span>Livraison rapide</span></div>
@@ -2691,6 +1832,72 @@
             }
         }
     </style>
+    <script>
+        (function() {
+            const root = document.getElementById('heroSlider');
+            const slides = Array.from(root.querySelectorAll('.slide'));
+            const dotsWrap = document.getElementById('sliderDots');
+
+            if (!slides.length) return;
+
+            // Create dots
+            slides.forEach((_, i) => {
+                const d = document.createElement('div');
+                d.className = 'dot' + (i === 0 ? ' active' : '');
+                d.dataset.index = i;
+                d.addEventListener('click', () => go(i, true));
+                dotsWrap.appendChild(d);
+            });
+            const dots = Array.from(dotsWrap.children);
+
+            let i = 0;
+            let timer = null;
+            const DURATION = 2000; // 2s
+
+            function setActive(idx) {
+                slides.forEach((s, k) => s.classList.toggle('active', k === idx));
+                dots.forEach((d, k) => d.classList.toggle('active', k === idx));
+            }
+
+            function next() {
+                i = (i + 1) % slides.length;
+                setActive(i);
+            }
+
+            function go(idx, reset = false) {
+                i = idx % slides.length;
+                setActive(i);
+                if (reset) restart();
+            }
+
+            function start() {
+                timer = setInterval(next, DURATION);
+            }
+
+            function stop() {
+                clearInterval(timer);
+                timer = null;
+            }
+
+            function restart() {
+                stop();
+                start();
+            }
+
+            // Pause on hover (optionnel mais sympa)
+            root.addEventListener('mouseenter', stop);
+            root.addEventListener('mouseleave', start);
+            // Pause quand l’onglet est caché
+            document.addEventListener('visibilitychange', () => {
+                document.hidden ? stop() : start();
+            });
+
+            // Init
+            setActive(0);
+            start();
+        })();
+    </script>
+
 </body>
 
 </html>

@@ -1389,7 +1389,7 @@ payement
                         updateCartDisplay();
                         checkoutModal.style.display = "block";
                     } else {
-                        window.location.href = "checkout.html";
+                        window.location.href = "{{ route('checkout.index') }}";
                     }
                 });
             }

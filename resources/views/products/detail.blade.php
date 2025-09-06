@@ -319,7 +319,7 @@ $specs = [
             @endforeach
         </div>
     </section>
-@endif
+   @endif
 
     </div>
 
@@ -560,24 +560,24 @@ $specs = [
     </script>
 
  <script>
-(() => {
-  const url = encodeURIComponent(@json($pageUrl));
-  const text = encodeURIComponent(@json($product->name . ' - ' . ($product->description ? \Illuminate\Support\Str::limit($product->description, 120) : '')));
+    (() => {
+    const url = encodeURIComponent(@json($pageUrl));
+    const text = encodeURIComponent(@json($product->name . ' - ' . ($product->description ? \Illuminate\Support\Str::limit($product->description, 120) : '')));
 
-  const wa = document.getElementById('shareWa');
-  const fb = document.getElementById('shareFb');
-  const tw = document.getElementById('shareX');
-  const cp = document.getElementById('copyLink');
+    const wa = document.getElementById('shareWa');
+    const fb = document.getElementById('shareFb');
+    const tw = document.getElementById('shareX');
+    const cp = document.getElementById('copyLink');
 
-  if (wa) wa.href = `https://wa.me/?text=${text}%20${url}`;
-  if (fb) fb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-  if (tw) tw.href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+    if (wa) wa.href = `https://wa.me/?text=${text}%20${url}`;
+    if (fb) fb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+    if (tw) tw.href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
 
-  if (cp) cp.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(@json($pageUrl)); alert('Lien copié ✅'); }
-    catch { prompt('Copiez le lien :', @json($pageUrl)); }
-  });
-})();
+    if (cp) cp.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(@json($pageUrl)); alert('Lien copié ✅'); }
+        catch { prompt('Copiez le lien :', @json($pageUrl)); }
+    });
+    })();
 </script>
 
 <script src="{{ asset('js/google-translate.js') }}"></script>

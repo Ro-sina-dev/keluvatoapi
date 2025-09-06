@@ -108,70 +108,85 @@
             </div>
 
             <div class="orders-list">
-                @forelse ($orders as $order)
-                    <div class="order-card" data-status="{{ $order->status }}"
-                        style="background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 25px;">
-                        <div class="order-header"
-                            style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #f1f1f1;">
-                            <div class="order-info">
-                                <h3 style="margin: 0; color: #1f4e5f;">Commande #{{ $order->id }}</h3>
-                                <p style="color: #666;">Passée le {{ $order->created_at->format('d/m/Y') }}</p>
-                            </div>
-                            <div class="order-status"
-                                style="background:
-                                @if ($order->status == 'pending') #4a6bff
-                                @elseif($order->status == 'delivered') #4caf50
-                                @elseif($order->status == 'cancelled') #f44336
-                                @else #ccc @endif;
-                                color: white; padding: 8px 15px; border-radius: 20px;">
-                                {{ ucfirst($order->status) }}
-                            </div>
-                        </div>
+                    @php
+                    // 1) Déclare la table de correspondance UNE FOIS
+                    $map = [
+                        'pending'   => ['ui' => 'pending',   'label' => "En cours",   'color' => '#4a6bff'],
+                        'paid'      => ['ui' => 'pending',   'label' => "Payée",      'color' => '#4a6bff'],
+                        'shipped'   => ['ui' => 'pending',   'label' => "Expédiée",   'color' => '#4a6bff'],
+                        'completed' => ['ui' => 'delivered', 'label' => "Livrée",     'color' => '#4caf50'],
+                        'canceled'  => ['ui' => 'cancelled', 'label' => "Annulée",    'color' => '#f44336'],
+                    ];
+                    @endphp
 
-                        <div class="order-body" style="padding: 20px;">
-                            <div class="order-products" style="display: flex; flex-wrap: wrap; gap: 20px;">
-                                @foreach ($order->items as $item)
-                                    <div class="product-item"
-                                        style="display: flex; gap: 15px; width: calc(50% - 10px);">
-                                        <img src="{{ $item->image ?? 'https://via.placeholder.com/80' }}"
-                                            style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px;">
-                                        <div class="product-details">
-                                            <h4 style="margin: 0;">{{ $item->name }}</h4>
-                                            <p style="color: #666;">Quantité : {{ $item->quantity }}</p>
-                                            <p style="font-weight: 600; color: #1f4e5f;">
-                                                {{ number_format($item->price, 2, ',', ' ') }} €</p>
+                    @forelse ($orders as $order)
+                        @php
+                            // 2) Calcule le mapping POUR CETTE COMMANDE
+                            $meta = $map[$order->status] ?? ['ui' => 'other', 'label' => ucfirst($order->status), 'color' => '#ccc'];
+                        @endphp
+
+                        <div class="order-card" data-status="{{ $meta['ui'] }}"
+                            style="background:white;border-radius:15px;box-shadow:0 5px 15px rgba(0,0,0,0.05);margin-bottom:25px;">
+                            <div class="order-header"
+                                style="display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid #f1f1f1;">
+                                <div class="order-info">
+                                    <h3 style="margin:0;color:#1f4e5f;">Commande #{{ $order->id }}</h3>
+                                    <p style="color:#666;">Passée le {{ $order->created_at->format('d/m/Y') }}</p>
+                                </div>
+
+                                <!-- 3) Utilise le mapping pour couleur + libellé -->
+                                <div class="order-status"
+                                    style="background:{{ $meta['color'] }};color:white;padding:8px 15px;border-radius:20px;">
+                                    {{ $meta['label'] }}
+                                </div>
+                            </div>
+
+                            <div class="order-body" style="padding:20px;">
+                                <div class="order-products" style="display:flex;flex-wrap:wrap;gap:20px;">
+                                    @foreach (($order->items ?? []) as $item)
+                                        <div class="product-item" style="display:flex;gap:15px;width:calc(50% - 10px);">
+                                            <img src="{{ $item->image ?? 'https://via.placeholder.com/80' }}"
+                                                style="width:80px;height:80px;object-fit:cover;border-radius:10px;">
+                                            <div class="product-details">
+                                                <h4 style="margin:0;">{{ $item->name }}</h4>
+                                                <p style="color:#666;">Quantité : {{ $item->quantity }}</p>
+                                                <p style="font-weight:600;color:#1f4e5f;">
+                                                    {{ number_format($item->price, 2, ',', ' ') }} {{ $order->currency ?? '€' }}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            <div class="order-summary"
-                                style="display: flex; justify-content: space-between; border-top: 1px solid #f1f1f1; padding-top: 20px;">
-                                <div class="delivery-info">
-                                    <h4 style="margin: 0 0 10px;"><i class="fas fa-truck"
-                                            style="margin-right: 10px;"></i>Livraison</h4>
-                                    <p style="color: #666;">
-                                        @if ($order->status == 'delivered')
-                                            Livrée le {{ $order->updated_at->format('d/m/Y') }}
-                                        @elseif($order->status == 'cancelled')
-                                            Annulée le {{ $order->updated_at->format('d/m/Y') }}
-                                        @else
-                                            En cours de traitement
-                                        @endif
-                                    </p>
+                                    @endforeach
                                 </div>
 
-                                <div class="order-total" style="text-align: right;">
-                                    <p style="margin: 0 0 5px; color: #666;">Total commande :</p>
-                                    <h3 style="color: #1f4e5f;">{{ number_format($order->total, 2, ',', ' ') }} €</h3>
+                                <div class="order-summary"
+                                    style="display:flex;justify-content:space-between;border-top:1px solid #f1f1f1;padding-top:20px;">
+                                    <div class="delivery-info">
+                                        <h4 style="margin:0 0 10px;"><i class="fas fa-truck" style="margin-right:10px;"></i>Livraison</h4>
+                                        <p style="color:#666;">
+                                            @if ($meta['ui'] === 'delivered')
+                                                Livrée le {{ $order->updated_at->format('d/m/Y') }}
+                                            @elseif ($meta['ui'] === 'cancelled')
+                                                Annulée le {{ $order->updated_at->format('d/m/Y') }}
+                                            @else
+                                                En cours de traitement
+                                            @endif
+                                        </p>
+                                    </div>
+
+                                    <div class="order-total" style="text-align:right;">
+                                        <p style="margin:0 0 5px;color:#666;">Total commande :</p>
+                                        <h3 style="color:#1f4e5f;">
+                                            {{ number_format($order->total, 2, ',', ' ') }} {{ $order->currency ?? '€' }}
+                                        </h3>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @empty
-                    <p>Aucune commande pour l'instant.</p>
-                @endforelse
+                    @empty
+                        <p>Aucune commande pour l'instant.</p>
+                    @endforelse
             </div>
+
 
             <div class="pagination" style="display: flex; justify-content: center; margin-top: 40px">
                 <button

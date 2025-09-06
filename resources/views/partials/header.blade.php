@@ -18,7 +18,7 @@
         <!-- Logo -->
         <!--  <a href="index.html" style="display: inline-block">
                 <div class="logo-wrapper" style="flex: 0 0 auto">
-                    <!-- Votre logo (peut être une image ou un fond CSS) -->
+                  Votre logo (peut être une image ou un fond CSS) -->
         <!--  </div>-->
         <!-- </a>-->
 

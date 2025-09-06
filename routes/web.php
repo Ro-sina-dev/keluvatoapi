@@ -145,7 +145,6 @@ Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('c
 
 Route::post('/checkout/stripe', [CheckoutController::class, 'createStripeCheckout'])->name('checkout.stripe');
 Route::get('/checkout/cancel',  [CheckoutController::class, 'cancel'])->name('checkout.cancel');
-Route::post('/stripe/webhook',  [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 
 // =============================
